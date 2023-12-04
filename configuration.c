@@ -25,6 +25,11 @@ void display_help(char *my_name) {
  * @param the_config is a pointer to the configuration to be initialized
  */
 void init_configuration(configuration_t *the_config) {
+    the_config->source[0] = '\0';
+    the_config->destination[0] = '\0';
+    the_config->processes_count = 0;
+    the_config->is_parallel = false;
+    the_config->uses_md5 = false;
 }
 
 /*!
@@ -35,4 +40,67 @@ void init_configuration(configuration_t *the_config) {
  * @return -1 if configuration cannot succeed, 0 when ok
  */
 int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
+
+    if(argc <= 2) {
+        return -1;
+    }
+
+    char * temp1 = argv[1];
+
+    if(strlen(temp1) >= 1024){
+        return -1;
+    }
+
+    for(int i = 0; i < strlen(temp1); i++){
+        the_config->source[i] = temp1[i];
+    }
+
+    char * temp2 = argv[2];
+
+    if(strlen(temp2) >= 1024){
+        return -1;
+    }
+
+    for(int i = 0; i < strlen(temp2); i++){
+        the_config->source[i] = temp2[i];
+    }
+
+
+    int opt = 0;
+    struct option my_opts[] = {
+            {.name="date-size-only",.has_arg=0,.flag=0,.val='a'},
+            {.name="n",.has_arg=1,.flag=0,.val='b'},
+            {.name="no-parallel",.has_arg=0,.flag=0,.val='c'},
+            {.name="v",.has_arg=0,.flag=0,.val='d'},
+            {.name="dry-run",.has_arg=0,.flag=0,.val='e'},
+            {.name=0,.has_arg=0,.flag=0,.val=0},
+    };
+    while((opt = getopt_long(argc, argv, "", my_opts, NULL)) != -1) {
+        switch (opt) {
+            case 'a':
+                    the_config->uses_md5 = false;
+                break;
+
+            case 'b':
+                if (optarg) {
+                    the_config->processes_count = atoi(optarg);
+                }
+                break;
+
+            case 'c':
+                    the_config->is_parallel = false;
+                break;
+
+            case 'd'://affichage des listes et des opérations
+
+                break;
+
+            case 'e'://lancement avec essai
+
+                break;
+        }
+    }
+    return 0;
+
+
 }
