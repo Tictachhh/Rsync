@@ -27,7 +27,22 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
+    struct stat file;
+    while (list->head != NULL){
+        if (strcmp(file_path, list->head->path_and_name) == 0){
+            //file already exist
+            return 0;
+        }
+        list->head = list->head->next;
+    }
+    if(stat(file_path, &file) == 0){
 
+        //success
+        return *list;
+    } else{
+        //out of memory
+        return -1;
+    }
 }
 
 /*!
