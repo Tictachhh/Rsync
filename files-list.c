@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <stdio.h>
 
 /*!
@@ -28,6 +27,7 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
+
 }
 
 /*!
