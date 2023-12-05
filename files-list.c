@@ -27,22 +27,29 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    struct stat file;
-    while (list->head != NULL){
-        if (strcmp(file_path, list->head->path_and_name) == 0){
+    struct files_list_entry_t head1 = list->head;
+    struct files_list_entry_t head2 = list->head;
+    while (head1 != NULL){
+        if (strcmp(file_path, head1.path_and_name) == 0) {
             //file already exist
             return 0;
         }
-        list->head = list->head->next;
+        head1 = head1->next;
     }
-    if(stat(file_path, &file) == 0){
-
-        //success
-        return *list;
-    } else{
-        //out of memory
-        return -1;
+    //find the right place for the file
+    while (strcmp(head2->path_and_name, file_path) < 0) {
+        head2 = head2->next;
     }
+    struct files_list_entry_t new_file = (struct files_list_entry_t *) malloc(sizeof(struct files_list_entry_t));
+    //add the file
+    new_file->prev = head2;
+    new_file->next = head2->next;
+    if (head2->next != NULL) {
+        head2->next->prev = new_file;
+    }
+    head2->next = new_file;
+    //success
+    return *list;
 }
 
 /*!
