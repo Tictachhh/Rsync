@@ -61,6 +61,20 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
+    struct files_list_entry_t tail = (struct files_list_entry_t *) malloc(sizeof(struct files_list_entry_t));
+    tail->path_and_name = entry->path_and_name;
+    tail->mtime = entry->mtime;
+    tail->size = entry->size;
+    tail->md5sum = entry->md5sum;
+    tail->entry_type = entry->entry_type;
+    tail->mode = entry->mode;
+    tail->next = NULL;
+    tail->prev = list->tail;
+    list->tail->next = tail;
+    if (list->tail == tail){
+        return 0;
+    }
+    return -1;
 }
 
 /*!
@@ -73,6 +87,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
  *  @return a pointer to the element found, NULL if none were found.
  */
 files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) {
+
 }
 
 /*!
