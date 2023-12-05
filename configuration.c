@@ -78,7 +78,7 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
     while((opt = getopt_long(argc, argv, "", my_opts, NULL)) != -1) {
         switch (opt) {
             case 'a':
-                    the_config->uses_md5 = false;
+                the_config->uses_md5 = false;
                 break;
 
             case 'b':
@@ -88,15 +88,15 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
                 break;
 
             case 'c':
-                    the_config->is_parallel = false;
+                the_config->is_parallel = false;
                 break;
 
-            case 'd'://affichage des listes et des opérations
-
+            case 'd':
+                the_config->verbose = true;
                 break;
 
-            case 'e'://lancement avec essai
-
+            case 'e':
+                the_config->dry_run = true;
                 break;
         }
     }
