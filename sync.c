@@ -68,6 +68,23 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
  * @param target is the target dir whose content must be listed
  */
 void make_list(files_list_t *list, char *target) {
+
+    DIR *dir = opendir(target);
+
+    struct dirent * dent;
+
+    while ((dent = get_next_entry(dir)) != NULL){
+        //d_type existe sur linux je crois
+        if(dent->d_type == 4){
+            add_file_entry(list,dent->d_name);
+            make_list(list, concat_path(dent->d_name, target, dent->d_name));
+        }
+        else if(dent->d_type == 8){
+            add_file_entry(list,dent->d_name);
+        }
+    }
+
+    closedir(dir);
 }
 
 /*!
@@ -76,6 +93,7 @@ void make_list(files_list_t *list, char *target) {
  * @return a pointer to a dir, NULL if it cannot be opened
  */
 DIR *open_dir(char *path) {
+    return opendir(path);
 }
 
 /*!
@@ -85,4 +103,5 @@ DIR *open_dir(char *path) {
  * Relevant entries are all regular files and dir, except . and ..
  */
 struct dirent *get_next_entry(DIR *dir) {
+    return readdir(dir);
 }
