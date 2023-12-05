@@ -74,7 +74,7 @@ void make_list(files_list_t *list, char *target) {
     struct dirent * dent;
 
     while ((dent = get_next_entry(dir)) != NULL){
-
+        //d_type existe sur linux je crois
         if(dent->d_type == 4){
             add_file_entry(list,dent->d_name);
             make_list(list, concat_path(dent->d_name, target, dent->d_name));
