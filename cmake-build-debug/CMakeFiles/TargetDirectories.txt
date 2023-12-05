@@ -1,3 +1,0 @@
-C:/Users/loic_/CLionProjects/Rsync/cmake-build-debug/CMakeFiles/Rsync.dir
-C:/Users/loic_/CLionProjects/Rsync/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/loic_/CLionProjects/Rsync/cmake-build-debug/CMakeFiles/rebuild_cache.dir

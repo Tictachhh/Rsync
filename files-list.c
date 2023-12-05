@@ -80,3 +80,6 @@ void display_files_list_reversed(files_list_t *list) {
         printf("%s\n", cursor->path_and_name);
     }
 }
+
+
+//ahahahahahaha
