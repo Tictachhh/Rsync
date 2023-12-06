@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <openssl/evp.h>
+#include <openssl/md5.h>
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
@@ -27,6 +28,61 @@
  * @return -1 in case of error, 0 else
  */
 int get_file_stats(files_list_entry_t *entry) {
+    struct stat file_info;
+
+    if(stat(entry->path_and_name, &file_info) == -1) {
+        perror("Erreur d'obtention des stats");
+        return -1;
+    }
+
+    mode_t mode = file_info.st_mode;
+
+    long long mtime = file_info.st_mtim.tv_sec * 1000000000 + file_info.st_mtim.tv_nsec;
+
+    off_t size = file_info.st_size;
+
+    int entry_type;
+    if (S_ISDIR(mode)) {
+        entry_type = 1; //Pour un dossier
+    } else if (S_ISDIR(mode)) {
+        entry_type = 0; //Pour un fichier
+
+        FILE *file = fopen(entry->path_and_name, "r");
+        if (!file) {
+            perror("Erreur lors de l'ouverture du fichier");
+            return -1;
+        }
+
+        MD5_CTX md5_ctx; //structure définie dans OpenSSL
+        MD5_Init(&md5_ctx); //Initialise la structure
+
+        size_t read_bytes;
+        unsigned char buffer[4096];
+
+        while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+            MD5_Update(&md5_ctx, buffer, read_bytes);
+        }
+
+        unsigned char md5sum[MD5_DIGEST_LENGTH];
+        MD5_Final(md5sum, &md5_ctx);
+
+        fclose(file);
+
+        printf("MD5 Sum: ");
+        for (int i=0; i < MD5_DIGEST_LENGTH; i++) {
+            printf("%02x", md5sum[i]);
+        }
+        printf("\n");
+    } else{
+        return -1;
+    }
+
+    printf("Mode: %o\n", mode);
+    printf("Mtime: %lld\n", mtime);
+    printf("Size: %ld\n", size);
+    printf("Entry Type: %s\n", entry_type == 0 ? "FICHIER" : "DOSSIER");
+
+    return 0;
 }
 
 /*!
@@ -36,6 +92,65 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
+    FILE *file = fopen(entry->path_and_name, "r");
+    if (!file) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return -1;
+    }
+    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+    if (!md_ctx) {
+        perror("Error creating MD_CTX");
+        fclose(file);
+        return -1;
+    }
+
+    const EVP_MD *md = EVP_md5();
+    if (!md) {
+        perror("Error getting MD5 algorithm");
+        EVP_MD_CTX_free(md_ctx);
+        fclose(file);
+        return -1;
+    }
+
+    if (EVP_DigestInit_ex(md_ctx, md, NULL) != 1) {
+        perror("Error initializing digest");
+        EVP_MD_CTX_free(md_ctx);
+        fclose(file);
+        return -1;
+    }
+
+    size_t read_bytes;
+    unsigned char buffer[4096];
+
+    while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        if (EVP_DigestUpdate(md_ctx, buffer, read_bytes) != 1) {
+            perror("Error updating digest");
+            EVP_MD_CTX_free(md_ctx);
+            fclose(file);
+            return -1;
+        }
+    }
+
+    unsigned char md5sum[EVP_MAX_MD_SIZE];
+    unsigned int md5sum_size;
+
+    if (EVP_DigestFinal_ex(md_ctx, md5sum, &md5sum_size) != 1) {
+        perror("Error finalizing digest");
+        EVP_MD_CTX_free(md_ctx);
+        fclose(file);
+        return -1;
+    }
+
+    EVP_MD_CTX_free(md_ctx);
+    fclose(file);
+
+    printf("MD5 Sum: ");
+    for (unsigned int i = 0; i < md5sum_size; i++) {
+        printf("%02x", md5sum[i]);
+    }
+    printf("\n");
+
+    return 0;
 }
 
 /*!
@@ -44,6 +159,14 @@ int compute_file_md5(files_list_entry_t *entry) {
  * @return true if directory exists, false else
  */
 bool directory_exists(char *path_to_dir) {
+    DIR *dir = opendir(path_to_dir);
+
+    if (dir) {
+        closedir(dir);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*!
@@ -53,4 +176,21 @@ bool directory_exists(char *path_to_dir) {
  * Hint: try to open a file in write mode in the target directory.
  */
 bool is_directory_writable(char *path_to_dir) {
+    //Création d'un fichier temporaire pour effectuer les tests
+    const char *test_file_name = "test.tmp";
+
+    char test_file_path[256];
+    snprintf(test_file_path, sizeof(test_file_path), "%s/%s", path_to_dir, test_file_name);
+
+    // Tente d'ouvrir le fichier en écriture
+    FILE *test_file = fopen(test_file_path, "w");
+
+    if (test_file) {
+        // Si l'ouverture réussit, ferme le fichier et le supprime
+        fclose(test_file);
+        remove(test_file_path);
+        return true;
+    } else {
+        return false;
+    }
 }
