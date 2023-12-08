@@ -61,6 +61,20 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
+    struct files_list_entry_t tail = (struct files_list_entry_t *) malloc(sizeof(struct files_list_entry_t));
+    tail->path_and_name = entry->path_and_name;
+    tail->mtime = entry->mtime;
+    tail->size = entry->size;
+    tail->md5sum = entry->md5sum;
+    tail->entry_type = entry->entry_type;
+    tail->mode = entry->mode;
+    tail->next = NULL;
+    tail->prev = list->tail;
+    list->tail->next = tail;
+    if (list->tail == tail){
+        return 0;
+    }
+    return -1;
 }
 
 /*!
@@ -72,7 +86,23 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
  *  @param start_of_dest the position of the name of the file in the destination dir (removing the dest path)
  *  @return a pointer to the element found, NULL if none were found.
  */
-files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) {
+files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) 
+{
+    
+    if (list == NULL || file_path == NULL) 
+    {
+        return NULL;
+    }
+
+    files_list_entry_t *actuel = list->head;
+
+    while (actuel != NULL) {
+        if (strcmp(actuel->path_and_name + start_of_src, file_path + start_of_dest) == 0) {
+            return actuel;
+        actuel = actuel->next;
+    }
+
+    return NULL;
 }
 
 /*!
