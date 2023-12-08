@@ -101,6 +101,63 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
+    FILE *file = fopen(entry->file_path, "rb");
+    if (!file) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return -1;
+    }
+
+    EVP_MD_CTX *mdctx;
+    const EVP_MD *md;
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+
+    md = EVP_md5();
+    if (!md) {
+        perror("Erreur lors de l'initialisation du contexte MD5");
+        fclose(file);
+        return -1;
+    }
+
+    mdctx = EVP_MD_CTX_new();
+    if (!mdctx) {
+        perror("Erreur lors de l'allocation du contexte MD5");
+        fclose(file);
+        return -1;
+    }
+
+    EVP_MD_CTX_init(mdctx);
+
+    if (1 != EVP_DigestInit_ex(mdctx, md, NULL)) {
+        perror("Erreur lors de l'initialisation du calcul de la somme MD5");
+        EVP_MD_CTX_free(mdctx);
+        fclose(file);
+        return -1;
+    }
+
+    char buffer[1024];
+    size_t bytes;
+
+    while ((bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        if (1 != EVP_DigestUpdate(mdctx, buffer, bytes)) {
+            perror("Erreur lors de la mise à jour du calcul de la somme MD5");
+            EVP_MD_CTX_free(mdctx);
+            fclose(file);
+            return -1;
+        }
+    }
+
+    if (1 != EVP_DigestFinal_ex(mdctx, md_value, &md_len)) {
+        perror("Erreur lors de la finalisation du calcul de la somme MD5");
+        EVP_MD_CTX_free(mdctx);
+        fclose(file);
+        return -1;
+    }
+
+    EVP_MD_CTX_free(mdctx);
+    fclose(file);
+
+    return 0;
 }
 
 /*!
