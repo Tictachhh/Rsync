@@ -27,8 +27,8 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    struct files_list_entry_t head1 = list->head;
-    struct files_list_entry_t head2 = list->head;
+    files_list_entry_t head1 = list->head;
+    files_list_entry_t head2 = list->head;
     while (head1 != NULL){
         if (strcmp(file_path, head1.path_and_name) == 0) {
             //file already exist
@@ -40,7 +40,7 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     while (strcmp(head2->path_and_name, file_path) < 0) {
         head2 = head2->next;
     }
-    struct files_list_entry_t new_file = (struct files_list_entry_t *) malloc(sizeof(struct files_list_entry_t));
+    struct files_list_entry_t new_file = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
     //add the file
     new_file->prev = head2;
     new_file->next = head2->next;
@@ -61,7 +61,7 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
-    struct files_list_entry_t tail = (struct files_list_entry_t *) malloc(sizeof(struct files_list_entry_t));
+    files_list_entry_t tail = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
     tail->path_and_name = entry->path_and_name;
     tail->mtime = entry->mtime;
     tail->size = entry->size;
@@ -72,8 +72,10 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
     tail->prev = list->tail;
     list->tail->next = tail;
     if (list->tail == tail){
+        //success
         return 0;
     }
+    //fail
     return -1;
 }
 
@@ -99,6 +101,7 @@ files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size
     while (actuel != NULL) {
         if (strcmp(actuel->path_and_name + start_of_src, file_path + start_of_dest) == 0) {
             return actuel;
+        }
         actuel = actuel->next;
     }
 
