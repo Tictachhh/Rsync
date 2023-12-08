@@ -37,7 +37,7 @@ int get_file_stats(files_list_entry_t *entry) {
 
     mode_t mode = file_info.st_mode;
 
-    long long mtime = file_info.st_mtim.tv_sec * 1000000000 + file_info.st_mtim.tv_nsec;
+    long long mtime = file_info.st_mtime.tv_sec * 1000000000 + file_info.st_mtime.tv_nsec;
 
     off_t size = file_info.st_size;
 
