@@ -30,6 +30,8 @@ void init_configuration(configuration_t *the_config) {
     the_config->processes_count = 0;
     the_config->is_parallel = false;
     the_config->uses_md5 = false;
+    the_config->verbose = false;
+    the_config->dry_run = false;
 }
 
 /*!
@@ -41,29 +43,25 @@ void init_configuration(configuration_t *the_config) {
  */
 int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
 
+    //Assez d'arguement ?
     if(argc <= 2) {
         return -1;
     }
 
-    char * temp1 = argv[1];
-
-    if(strlen(temp1) >= 1024){
+    //Bonne taille ?
+    if(strlen( argv[1]) >= 1024){
         return -1;
     }
+    //Copie
+    strcpy(the_config->source, argv[1]);
 
-    for(int i = 0; i < strlen(temp1); i++){
-        the_config->source[i] = temp1[i];
-    }
 
-    char * temp2 = argv[2];
-
-    if(strlen(temp2) >= 1024){
+    //Bonne taille ?
+    if(strlen( argv[2]) >= 1024){
         return -1;
     }
-
-    for(int i = 0; i < strlen(temp2); i++){
-        the_config->source[i] = temp2[i];
-    }
+    //Copie
+    strcpy(the_config->destination, argv[2]);
 
 
     int opt = 0;
