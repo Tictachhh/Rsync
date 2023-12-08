@@ -37,7 +37,7 @@ int get_file_stats(files_list_entry_t *entry) {
 
     mode_t mode = file_info.st_mode;
 
-    long long mtime = file_info.st_mtime + file_info.st_mtime;
+    long long mtime = file_info.st_mtime;
 
     off_t size = file_info.st_size;
 
@@ -52,24 +52,33 @@ int get_file_stats(files_list_entry_t *entry) {
             perror("Erreur lors de l'ouverture du fichier");
             return -1;
         }
+        unsigned char md5sum[MD5_DIGEST_LENGTH];
 
-        MD5_CTX md5_ctx; //structure définie dans OpenSSL
-        MD5_Init(&md5_ctx); //Initialise la structure
+        EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
+        if (!md5_ctx) {
+            perror("Erreur lors de la création du contexte MD5");
+            fclose(file);
+            return -1;
+        }
+
+        EVP_DigestInit(md5_ctx, EVP_md5());
 
         size_t read_bytes;
         unsigned char buffer[4096];
 
         while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-            MD5_Update(&md5_ctx, buffer, read_bytes);
+            EVP_DigestUpdate(md5_ctx, buffer, read_bytes);
         }
 
-        unsigned char md5sum[MD5_DIGEST_LENGTH];
-        MD5_Final(md5sum, &md5_ctx);
+        fclose(file);
+
+        EVP_DigestFinal(md5_ctx, md5sum, NULL);
+        EVP_MD_CTX_free(md5_ctx);
 
         fclose(file);
 
         printf("MD5 Sum: ");
-        for (int i=0; i < MD5_DIGEST_LENGTH; i++) {
+        for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
             printf("%02x", md5sum[i]);
         }
         printf("\n");
