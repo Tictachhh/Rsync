@@ -40,7 +40,7 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     while (strcmp(head2->path_and_name, file_path) < 0) {
         head2 = head2->next;
     }
-    files_list_entry_t new_file = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
+    files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
     //add the file
     new_file->prev = head2;
     new_file->next = head2->next;
