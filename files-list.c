@@ -30,7 +30,7 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     files_list_entry_t *head1 = list->head;
     files_list_entry_t *head2 = list->head;
     while (head1 != NULL){
-        if (strcmp(file_path, head1.path_and_name) == 0) {
+        if (strcmp(file_path, head1->path_and_name) == 0) {
             //file already exist
             return 0;
         }
@@ -40,7 +40,7 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     while (strcmp(head2->path_and_name, file_path) < 0) {
         head2 = head2->next;
     }
-    struct files_list_entry_t new_file = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
+    files_list_entry_t new_file = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
     //add the file
     new_file->prev = head2;
     new_file->next = head2->next;
@@ -49,7 +49,7 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     }
     head2->next = new_file;
     //success
-    return *list;
+    return head2;
 }
 
 /*!
@@ -61,17 +61,10 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
-    files_list_entry_t *tail = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
-    tail->path_and_name = entry->path_and_name;
-    tail->mtime = entry->mtime;
-    tail->size = entry->size;
-    tail->md5sum = entry->md5sum;
-    tail->entry_type = entry->entry_type;
-    tail->mode = entry->mode;
-    tail->next = NULL;
-    tail->prev = list->tail;
-    list->tail->next = tail;
-    if (list->tail == tail){
+    entry->next = NULL;
+    entry->prev = list->tail;
+    list->tail->next = entry;
+    if (list->tail == entry){
         //success
         return 0;
     }
