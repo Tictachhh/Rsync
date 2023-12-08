@@ -101,47 +101,6 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
-    FILE *file = fopen(entry->path_and_name, "r");
-    if (!file) {
-        perror("Erreur lors de l'ouverture du fichier");
-        return -1;
-    }
-
-    unsigned char md5sum[MD5_DIGEST_LENGTH];
-
-    EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
-    if (!md5_ctx) {
-        perror("Erreur lors de la création du contexte MD5");
-        fclose(file);
-        return -1;
-    }
-
-    EVP_DigestInit(md5_ctx, EVP_md5());
-
-    size_t read_bytes;
-    unsigned char buffer[4096];
-
-    while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        EVP_DigestUpdate(md5_ctx, buffer, read_bytes);
-    }
-
-    fclose(file);
-
-    if (1 != EVP_DigestFinal(md5_ctx, md5sum, NULL)) {
-        perror("Erreur lors de la finalisation du calcul de la somme MD5");
-        EVP_MD_CTX_free(md5_ctx);
-        return -1;
-    }
-
-    EVP_MD_CTX_free(md5_ctx);
-
-    printf("MD5 Sum for file %s: ", entry->path_and_name);
-    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        printf("%02x", md5sum[i]);
-    }
-    printf("\n");
-
-    return 0;
 }
 
 /*!
