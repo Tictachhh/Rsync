@@ -101,61 +101,45 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
-    FILE *file = fopen(entry->file_path, "rb");
+    FILE *file = fopen(entry->path_and_name, "r");
     if (!file) {
         perror("Erreur lors de l'ouverture du fichier");
         return -1;
     }
 
-    EVP_MD_CTX *mdctx;
-    const EVP_MD *md;
-    unsigned char md_value[EVP_MAX_MD_SIZE];
-    unsigned int md_len;
+    unsigned char md5sum[MD5_DIGEST_LENGTH];
 
-    md = EVP_md5();
-    if (!md) {
-        perror("Erreur lors de l'initialisation du contexte MD5");
+    EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
+    if (!md5_ctx) {
+        perror("Erreur lors de la création du contexte MD5");
         fclose(file);
         return -1;
     }
 
-    mdctx = EVP_MD_CTX_new();
-    if (!mdctx) {
-        perror("Erreur lors de l'allocation du contexte MD5");
-        fclose(file);
-        return -1;
+    EVP_DigestInit(md5_ctx, EVP_md5());
+
+    size_t read_bytes;
+    unsigned char buffer[4096];
+
+    while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        EVP_DigestUpdate(md5_ctx, buffer, read_bytes);
     }
 
-    EVP_MD_CTX_init(mdctx);
-
-    if (1 != EVP_DigestInit_ex(mdctx, md, NULL)) {
-        perror("Erreur lors de l'initialisation du calcul de la somme MD5");
-        EVP_MD_CTX_free(mdctx);
-        fclose(file);
-        return -1;
-    }
-
-    char buffer[1024];
-    size_t bytes;
-
-    while ((bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        if (1 != EVP_DigestUpdate(mdctx, buffer, bytes)) {
-            perror("Erreur lors de la mise à jour du calcul de la somme MD5");
-            EVP_MD_CTX_free(mdctx);
-            fclose(file);
-            return -1;
-        }
-    }
-
-    if (1 != EVP_DigestFinal_ex(mdctx, md_value, &md_len)) {
-        perror("Erreur lors de la finalisation du calcul de la somme MD5");
-        EVP_MD_CTX_free(mdctx);
-        fclose(file);
-        return -1;
-    }
-
-    EVP_MD_CTX_free(mdctx);
     fclose(file);
+
+    if (1 != EVP_DigestFinal(md5_ctx, md5sum, NULL)) {
+        perror("Erreur lors de la finalisation du calcul de la somme MD5");
+        EVP_MD_CTX_free(md5_ctx);
+        return -1;
+    }
+
+    EVP_MD_CTX_free(md5_ctx);
+
+    printf("MD5 Sum for file %s: ", entry->path_and_name);
+    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+        printf("%02x", md5sum[i]);
+    }
+    printf("\n");
 
     return 0;
 }
