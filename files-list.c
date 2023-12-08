@@ -27,8 +27,8 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    files_list_entry_t head1 = list->head;
-    files_list_entry_t head2 = list->head;
+    files_list_entry_t *head1 = list->head;
+    files_list_entry_t *head2 = list->head;
     while (head1 != NULL){
         if (strcmp(file_path, head1.path_and_name) == 0) {
             //file already exist
