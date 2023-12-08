@@ -101,66 +101,6 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
-    FILE *file = fopen(entry->path_and_name, "rb");
-    if (!file) {
-        perror("Erreur lors de l'ouverture du fichier");
-        return -1;
-    }
-
-    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
-    if (!md_ctx) {
-        perror("Erreur lors de la création du contexte MD5");
-        fclose(file);
-        return -1;
-    }
-
-    const EVP_MD *md = EVP_get_digestbyname("md5");
-    if (!md) {
-        perror("Erreur lors de l'obtention de l'algorithme MD5");
-        EVP_MD_CTX_free(md_ctx);
-        fclose(file);
-        return -1;
-    }
-
-    if (EVP_DigestInit_ex(md_ctx, md, NULL) != 1) {
-        perror("Erreur lors de l'initialisation du hachage");
-        EVP_MD_CTX_free(md_ctx);
-        fclose(file);
-        return -1;
-    }
-
-    size_t read_bytes;
-    unsigned char buffer[4096];
-
-    while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        if (EVP_DigestUpdate(md_ctx, buffer, read_bytes) != 1) {
-            perror("Erreur lors de la mise à jour du hachage");
-            EVP_MD_CTX_free(md_ctx);
-            fclose(file);
-            return -1;
-        }
-    }
-
-    unsigned char md5sum[EVP_MAX_MD_SIZE];
-    unsigned int md5sum_size;
-
-    if (EVP_DigestFinal_ex(md_ctx, md5sum, &md5sum_size) != 1) {
-        perror("Erreur lors de la finalisation du hachage");
-        EVP_MD_CTX_free(md_ctx);
-        fclose(file);
-        return -1;
-    }
-
-    EVP_MD_CTX_free(md_ctx);
-    fclose(file);
-
-    printf("MD5 Sum: ");
-    for (unsigned int i = 0; i < md5sum_size; i++) {
-        printf("%02x", md5sum[i]);
-    }
-    printf("\n");
-
-    return 0;
 }
 
 /*!
