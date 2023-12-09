@@ -6,9 +6,11 @@
 #include "messages.h"
 #include "file-properties.h"
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <unistd.h>
+#include <utime.h>
 #include <sys/msg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -176,7 +178,77 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  */
  //A FAIRE
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
+     const char *source_path = source_entry->source_path;
+     const char *destination_path = source_entry->destination_path;
 
+     // Créer la structure stat pour obtenir des informations sur le fichier source
+     struct stat source_stat;
+     if (stat(source_path, &source_stat) == -1) {
+         perror("Erreur lors de la récupération des informations sur le fichier source");
+         exit(EXIT_FAILURE);
+     }
+
+     // Ajuster les chemins pour éviter les préfixes répétés
+     size_t source_len = strlen(source_path);
+     size_t dest_len = strlen(destination_path);
+
+     // Assurer que le chemin source est inclus dans le chemin de destination
+     if (dest_len > source_len && strncmp(source_path, destination_path, source_len) == 0) {
+         // Le préfixe du chemin source est inclus dans le chemin de destination
+         destination_path += source_len;
+
+         // Ignorer les éventuels caractères de séparation supplémentaires
+         if (destination_path[0] == '/' || destination_path[0] == '\\') {
+             destination_path++;
+         }
+     }
+
+     // Vérifier si le fichier source est un répertoire
+     if (S_ISDIR(source_stat.st_mode)) {
+         // Créer le répertoire de destination s'il n'existe pas
+         if (mkdir(destination_path, source_stat.st_mode) == -1) {
+             perror("Erreur lors de la création du répertoire de destination");
+             exit(EXIT_FAILURE);
+         }
+     } else {
+         // Ouvrir le fichier source en lecture
+         int source_fd = open(source_path, O_RDONLY);
+         if (source_fd == -1) {
+             perror("Erreur lors de l'ouverture du fichier source");
+             exit(EXIT_FAILURE);
+         }
+
+         // Créer le fichier de destination en écriture
+         int destination_fd = open(destination_path, O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
+         if (destination_fd == -1) {
+             perror("Erreur lors de la création du fichier de destination");
+             exit(EXIT_FAILURE);
+         }
+
+         // Utiliser sendfile pour copier le contenu du fichier source vers le fichier de destination
+         off_t offset = 0;
+         ssize_t bytes_sent = sendfile(destination_fd, source_fd, &offset, source_stat.st_size);
+         if (bytes_sent == -1) {
+             perror("Erreur lors de la copie du fichier");
+             exit(EXIT_FAILURE);
+         }
+
+         // Fermer les descripteurs de fichier
+         close(source_fd);
+         close(destination_fd);
+     }
+
+     // Copier les attributs de temps du fichier source vers le fichier de destination
+     struct timeval times[2];
+     times[0].tv_sec = source_stat.st_atime;
+     times[0].tv_usec = 0;
+     times[1].tv_sec = source_stat.st_mtime;
+     times[1].tv_usec = 0;
+
+     if (utimes(destination_path, times) == -1) {
+         perror("Erreur lors de la copie des attributs de temps");
+         exit(EXIT_FAILURE);
+     }
 }
 
 /*!
