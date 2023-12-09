@@ -114,7 +114,7 @@ int compute_file_md5(files_list_entry_t *entry) {
 
     mdctx = EVP_MD_CTX_new();
     EVP_DigestInit_ex(mdctx, md, NULL);
-    EVP_DigestUpdate(mdctx, entry->path_and_name, strlen(input));
+    EVP_DigestUpdate(mdctx, entry->path_and_name, strlen(entry->path_and_name));
     EVP_DigestFinal_ex(mdctx, entry->md5sum, NULL);
     EVP_MD_CTX_free(mdctx);
 }
