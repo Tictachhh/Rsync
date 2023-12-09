@@ -29,19 +29,19 @@ void clear_files_list(files_list_t *list) {
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     files_list_entry_t *head1 = list->head;
     files_list_entry_t *head2 = list->head;
-    while (head1 != NULL){
+    while (head1 != NULL) {
         if (strcmp(file_path, head1->path_and_name) == 0) {
-            //file already exist
+            //Le ficgier existe déjà
             return 0;
         }
         head1 = head1->next;
     }
-    //find the right place for the file
+    //Trouver la bonne place pour le fichier
     while (strcmp(head2->path_and_name, file_path) < 0) {
         head2 = head2->next;
     }
     files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
-    //add the file
+    //Ajouter le dossier
     new_file->prev = head2;
     new_file->next = head2->next;
     if (head2->next != NULL) {
@@ -64,7 +64,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
     entry->next = NULL;
     entry->prev = list->tail;
     list->tail->next = entry;
-    if (list->tail == entry){
+    if (list->tail == entry) {
         //success
         return 0;
     }
@@ -84,8 +84,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
 files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) 
 {
     
-    if (list == NULL || file_path == NULL) 
-    {
+    if (list == NULL || file_path == NULL) {
         return NULL;
     }
 
