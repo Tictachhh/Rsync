@@ -101,22 +101,65 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
-    EVP_MD_CTX *mdctx;
-    const EVP_MD *md;
-
-    OpenSSL_add_all_digests();
-    md = EVP_get_digestbyname("md5");
-
-    if (!md) {
-        fprintf(stderr, "MD5 not supported!\n");
+    //Open the file in binary mode
+    FILE *file = fopen(entry->path_and_name, "rb");
+    if (!file) {
+        perror("Error opening file");
         return -1;
     }
 
-    mdctx = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(mdctx, md, NULL);
-    EVP_DigestUpdate(mdctx, entry->path_and_name, strlen(entry->path_and_name));
-    EVP_DigestFinal_ex(mdctx, entry->md5sum, NULL);
-    EVP_MD_CTX_free(mdctx);
+    //Create an MD5 context
+    EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
+    if (!md5_ctx) {
+        perror("Error creating MD5 context");
+        fclose(file);
+        return -1;
+    }
+
+    //Get the MD5 hash function
+    const EVP_MD *md = EVP_get_digestbyname("md5");
+    if (!md) {
+        perror("MD5 not supported");
+        EVP_MD_CTX_free(md5_ctx);
+        fclose(file);
+        return -1;
+    }
+
+    //Initialize the MD5 context
+    if (EVP_DigestInit_ex(md5_ctx, md, NULL) != 1) {
+        perror("Error initializing MD5 digest");
+        EVP_MD_CTX_free(md5_ctx);
+        fclose(file);
+        return -1;
+    }
+
+    //Read the file in chunks and update the MD5 context
+    size_t read_bytes;
+    unsigned char buffer[4096];
+
+    while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        if (EVP_DigestUpdate(md5_ctx, buffer, read_bytes) != 1) {
+            perror("Error updating MD5 digest");
+            EVP_MD_CTX_free(md5_ctx);
+            fclose(file);
+            return -1;
+        }
+    }
+
+    //Finalize the MD5 hash computation
+    if (EVP_DigestFinal_ex(md5_ctx, entry->md5sum, NULL) != 1) {
+        perror("Error finalizing MD5 digest");
+        EVP_MD_CTX_free(md5_ctx);
+        fclose(file);
+        return -1;
+    }
+
+    //Cleanup resources and close the file
+    EVP_MD_CTX_free(md5_ctx);
+    fclose(file);
+
+    //success
+    return 0;
 }
 
 /*!
