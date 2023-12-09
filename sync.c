@@ -180,7 +180,7 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  //A FAIRE
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
      const char *source_path = source_entry->path_and_name;
-     const char *destination_path = source_entry->;
+     const char *destination_path = the_config->destination;
 
      // Créer la structure stat pour obtenir des informations sur le fichier source
      struct stat source_stat;
