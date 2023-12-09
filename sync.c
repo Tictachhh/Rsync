@@ -43,10 +43,10 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     files_list_entry_t * current_destination = destination_list->head;
 
     //Parcours des deux listes
-    while (current_source != NULL && current_destination != NULL){
+    while (current_source != NULL && current_destination != NULL) {
 
         //S'il y a une difference, on l'ajoute à la liste des differences
-        if(mismatch(current_source,current_destination, the_config->uses_md5)){
+        if (mismatch(current_source,current_destination, the_config->uses_md5)) {
             add_entry_to_tail(differences_list,current_source);
         }
 
@@ -55,9 +55,9 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     }
 
     //Si la taille de la liste source est plus grande que la taille de la liste destination
-    if (current_source != NULL && current_destination == NULL){
+    if (current_source != NULL && current_destination == NULL) {
         //Parcours de ce qui reste et ajout des elements dans la liste des differences
-        while (current_source != NULL){
+        while (current_source != NULL) {
             add_entry_to_tail(differences_list,current_source);
             current_source = current_source->next;
         }
@@ -68,7 +68,7 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     files_list_entry_t * current_difference = differences_list->head;
 
     //Parcours de la liste des differences
-    while (current_difference != NULL){
+    while (current_difference != NULL) {
         //Copie des differences
         copy_entry_to_destination(current_difference,the_config);
         current_difference = current_difference->next;
@@ -149,9 +149,9 @@ void make_files_list(files_list_t *list, char *target_path) {
     files_list_entry_t * current = list->head;
 
     //Parcours de la liste
-    while (current != NULL){
+    while (current != NULL) {
         //Récupération si possible de toutes les informations du fichier
-        if(get_file_stats(current) == -1){
+        if (get_file_stats(current) == -1) {
             perror("Impossible de récupérer les informations du fichier");
         }
         current = current->next;
@@ -192,15 +192,15 @@ void make_list(files_list_t *list, char *target) {
 
     struct dirent * dent;
 
-    while ((dent = get_next_entry(dir)) != NULL){
+    while ((dent = get_next_entry(dir)) != NULL) {
         //d_type existe sur linux je crois
 
         //Si c'est un dossier on parcours le dossier de maniere recurcive
-        if(dent->d_type == 4){
+        if (dent->d_type == 4) {
             make_list(list, concat_path("", target, dent->d_name));
         }
         //Si c'est un fichier on l'ajoute à la liste
-        else if(dent->d_type == 8){
+        else if (dent->d_type == 8) {
             add_file_entry(list,concat_path("", target, dent->d_name));
         }
     }

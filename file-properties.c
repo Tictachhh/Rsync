@@ -140,14 +140,14 @@ char *filename = argv[1];
 
 
 int compute_file_md5(files_list_entry_t *entry) {
-    //Open the file in binary mode
+    //Ouvrir le fichier en mode binaire
     FILE *file = fopen(entry->path_and_name, "rb");
     if (!file) {
         perror("Error opening file");
         return -1;
     }
 
-    //Create an MD5 context
+    //Créer un context md5
     EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
     if (!md5_ctx) {
         perror("Error creating MD5 context");
@@ -155,7 +155,7 @@ int compute_file_md5(files_list_entry_t *entry) {
         return -1;
     }
 
-    //Get the MD5 hash function
+    //Obtenir la fonction de hachage MD5
     const EVP_MD *md = EVP_get_digestbyname("md5");
     if (!md) {
         perror("MD5 not supported");
@@ -164,7 +164,7 @@ int compute_file_md5(files_list_entry_t *entry) {
         return -1;
     }
 
-    //Initialize the MD5 context
+    //Initialiser le contexte MD5
     if (EVP_DigestInit_ex(md5_ctx, md, NULL) != 1) {
         perror("Error initializing MD5 digest");
         EVP_MD_CTX_free(md5_ctx);
@@ -172,7 +172,7 @@ int compute_file_md5(files_list_entry_t *entry) {
         return -1;
     }
 
-    //Read the file in chunks and update the MD5 context
+    //Lire le fichier par morceaux et mettre à jour le contexte MD5
     size_t read_bytes;
     unsigned char buffer[4096];
 
@@ -185,7 +185,7 @@ int compute_file_md5(files_list_entry_t *entry) {
         }
     }
 
-    //Finalize the MD5 hash computation
+    //Finaliser le calcul du hachage MD5
     if (EVP_DigestFinal_ex(md5_ctx, entry->md5sum, NULL) != 1) {
         perror("Error finalizing MD5 digest");
         EVP_MD_CTX_free(md5_ctx);
@@ -193,7 +193,7 @@ int compute_file_md5(files_list_entry_t *entry) {
         return -1;
     }
 
-    //Cleanup resources and close the file
+    //Libérer les ressources et fermer le fichier
     EVP_MD_CTX_free(md5_ctx);
     fclose(file);
 
