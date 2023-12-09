@@ -101,6 +101,22 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
+    EVP_MD_CTX *mdctx;
+    const EVP_MD *md;
+
+    OpenSSL_add_all_digests();
+    md = EVP_get_digestbyname("md5");
+
+    if (!md) {
+        fprintf(stderr, "MD5 not supported!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    mdctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    EVP_DigestUpdate(mdctx, entry->path_and_name, strlen(input));
+    EVP_DigestFinal_ex(mdctx, entry->md5sum, NULL);
+    EVP_MD_CTX_free(mdctx);
 }
 
 /*!
