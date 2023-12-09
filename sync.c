@@ -10,7 +10,7 @@
 #include <sys/sendfile.h>
 #include <unistd.h>
 #include <sys/msg.h>
-
+#include <stdlib.h>
 #include <stdio.h>
 
 /*!
