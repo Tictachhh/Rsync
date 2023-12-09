@@ -14,6 +14,7 @@
 #include <sys/msg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 /*!
  * @brief synchronize is the main function for synchronization
@@ -178,8 +179,8 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  */
  //A FAIRE
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
-     const char *source_path = source_entry->source_path;
-     const char *destination_path = source_entry->destination_path;
+     const char *source_path = source_entry->path_and_name;
+     const char *destination_path = source_entry->;
 
      // Créer la structure stat pour obtenir des informations sur le fichier source
      struct stat source_stat;
