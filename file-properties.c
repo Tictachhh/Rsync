@@ -109,7 +109,7 @@ int compute_file_md5(files_list_entry_t *entry) {
 
     if (!md) {
         fprintf(stderr, "MD5 not supported!\n");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     mdctx = EVP_MD_CTX_new();
