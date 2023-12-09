@@ -100,6 +100,45 @@ int get_file_stats(files_list_entry_t *entry) {
  * @return -1 in case of error, 0 else
  * Use libcrypto functions from openssl/evp.h
  */
+
+//Temp
+/*
+char *filename = argv[1];
+    FILE *file = fopen(filename, "rb");
+
+    if (!file) {
+        printf("Cannot open file: %s\n", filename);
+        return EXIT_FAILURE;
+    }
+
+    MD5_CTX mdContext;
+    int bytes;
+    unsigned char data[MAX_BUF_SIZE];
+    unsigned char digest[MD5_DIGEST_LENGTH];
+
+    MD5_Init(&mdContext);
+
+    while ((bytes = fread(data, 1, MAX_BUF_SIZE, file)) != 0) {
+        MD5_Update(&mdContext, data, bytes);
+    }
+
+    MD5_Final(digest, &mdContext);
+
+    fclose(file);
+
+    printf("MD5 (%s) = ", filename);
+    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+        printf("%02x", digest[i]);
+    }
+    printf("\n");
+
+
+
+ */
+
+
+
+
 int compute_file_md5(files_list_entry_t *entry) {
     //Open the file in binary mode
     FILE *file = fopen(entry->path_and_name, "rb");
