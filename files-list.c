@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "file-properties.h"
 
 /*!
  * @brief clear_files_list clears a files list
@@ -27,10 +28,17 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    if (list == NULL || file_path == NULL) {
-        //Mauvaise utilisation de la fonction
-        return 0;
+    files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
+    get_file_stats(new_file);
+
+    if(list == NULL){
+        list = malloc(sizeof (files_list_t));
+        list->head = new_file;
+        list->tail = new_file;
+        return new_file;
     }
+
+
     files_list_entry_t *head1 = list->head;
     files_list_entry_t *head2 = list->head;
 
@@ -43,23 +51,29 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     }
 
     //Trouver la bonne place pour le fichier
-    while (strcmp(head2->path_and_name, file_path) < 0) {
+    while (head2 != NULL && strcmp(head2->path_and_name, file_path) < 0) {
         head2 = head2->next;
     }
 
-    files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
-    if (new_file == NULL) {
-        //Echec de l'allocation mémoire
-        return 0;
+
+    if(head2 == NULL){
+        new_file->next = NULL;
+        new_file->prev = list->tail;
+        list->tail = new_file;
     }
 
-    //Ajout de la nouvelle entrée
-    new_file->prev = head2;
-    new_file->next = head2->next;
-    if (head2->next != NULL) {
-        head2->next->prev = new_file;
+    else{
+        new_file->next = head2;
+        new_file->prev = head2->prev;
+
+        if(head2->prev == NULL){
+            list->head = new_file;
+        }
+        else{
+            new_file->prev->next = new_file;
+        }
+
     }
-    head2->next = new_file;
 
     //Retourne la nouvelle entrée
     return new_file;
