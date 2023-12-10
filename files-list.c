@@ -36,6 +36,11 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
         list->tail = new_file;
         return new_file;
     }
+    else if(list->head == NULL && list->tail == NULL){
+        list->head = new_file;
+        list->tail = new_file;
+        return new_file;
+    }
 
 
     files_list_entry_t *head1 = list->head;

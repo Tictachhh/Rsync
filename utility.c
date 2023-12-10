@@ -12,11 +12,14 @@
  */
 char *concat_path(char *result, char *prefix, char *suffix) {
 
+    char *prefix_copy = "";
+    strcpy(prefix_copy,prefix);
+
     if(prefix[strlen(prefix) - 1] != '/'){
-        strcpy(prefix,"/");
+        strcpy(prefix_copy,"/");
     }
 
-    strcpy(prefix,suffix);
-    //strcpy(result,prefix);
-    return prefix;
+    strcpy(prefix_copy,suffix);
+    //strcpy(result,prefix_copy);
+    return prefix_copy;
 }
