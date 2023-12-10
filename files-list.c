@@ -27,29 +27,42 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
+    if (list == NULL || file_path == NULL) {
+        //Mauvaise utilisation de la fonction
+        return 0;
+    }
     files_list_entry_t *head1 = list->head;
     files_list_entry_t *head2 = list->head;
+
     while (head1 != NULL) {
         if (strcmp(file_path, head1->path_and_name) == 0) {
-            //Le ficgier existe déjà
-            return 0;
+            //Le fichier existe déjà
+            return NULL;
         }
         head1 = head1->next;
     }
+
     //Trouver la bonne place pour le fichier
     while (strcmp(head2->path_and_name, file_path) < 0) {
         head2 = head2->next;
     }
+
     files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
-    //Ajouter le dossier
+    if (new_file == NULL) {
+        //Echec de l'allocation mémoire
+        return 0;
+    }
+
+    //Ajout de la nouvelle entrée
     new_file->prev = head2;
     new_file->next = head2->next;
     if (head2->next != NULL) {
         head2->next->prev = new_file;
     }
     head2->next = new_file;
-    //success
-    return head2;
+
+    //Retourne la nouvelle entrée
+    return new_file;
 }
 
 /*!
