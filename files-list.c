@@ -29,7 +29,6 @@ void clear_files_list(files_list_t *list) {
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
-    get_file_stats(new_file);
 
     if(list == NULL){
         list = malloc(sizeof (files_list_t));
