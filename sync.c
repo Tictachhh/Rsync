@@ -266,15 +266,17 @@ void make_list(files_list_t *list, char *target) {
 
     while ((dent = get_next_entry(dir)) != NULL) {
         //d_type existe sur linux je crois
+        if(strcmp(dent->d_name, ".") != 0 && strcmp(dent->d_name, "..") != 0){
+            //Si c'est un dossier on parcours le dossier de maniere recurcive
+            if (dent->d_type == 4) {
+                make_list(list, concat_path("", target, dent->d_name));
+            }
+                //Si c'est un fichier on l'ajoute à la liste
+            else if (dent->d_type == 8) {
+                add_file_entry(list,concat_path("", target, dent->d_name));
+            }
+        }
 
-        //Si c'est un dossier on parcours le dossier de maniere recurcive
-        if (dent->d_type == 4) {
-            make_list(list, concat_path("", target, dent->d_name));
-        }
-        //Si c'est un fichier on l'ajoute à la liste
-        else if (dent->d_type == 8) {
-            add_file_entry(list,concat_path("", target, dent->d_name));
-        }
     }
 
     closedir(dir);
