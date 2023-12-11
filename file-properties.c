@@ -44,7 +44,7 @@ int get_file_stats(files_list_entry_t *entry) {
     int entry_type;
     if (S_ISDIR(mode)) {
         entry_type = 1; //Pour un dossier
-    } else if (S_ISDIR(mode)) {
+    } else if (S_ISREG(mode)) {
         entry_type = 0; //Pour un fichier
 
         FILE *file = fopen(entry->path_and_name, "r");
@@ -70,8 +70,6 @@ int get_file_stats(files_list_entry_t *entry) {
             EVP_DigestUpdate(md5_ctx, buffer, read_bytes);
         }
 
-        fclose(file);
-
         EVP_DigestFinal(md5_ctx, md5sum, NULL);
         EVP_MD_CTX_free(md5_ctx);
 
@@ -83,6 +81,7 @@ int get_file_stats(files_list_entry_t *entry) {
         }
         printf("\n");
     } else {
+	perror("Erreur");
         return -1;
     }
 
