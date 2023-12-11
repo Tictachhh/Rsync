@@ -44,12 +44,12 @@ void init_configuration(configuration_t *the_config) {
 int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
 
     //Assez d'arguement ?
-    if(argc <= 2) {
+    if (argc <= 2) {
         return -1;
     }
 
     //Bonne taille ?
-    if(strlen( argv[1]) >= 1024){
+    if (strlen(argv[1]) >= 1024) {
         return -1;
     }
     //Copie
@@ -57,7 +57,7 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
 
 
     //Bonne taille ?
-    if(strlen( argv[2]) >= 1024){
+    if (strlen(argv[2]) >= 1024) {
         return -1;
     }
     //Copie
@@ -66,34 +66,34 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
 
     int opt = 0;
     struct option my_opts[] = {
-            {.name="date-size-only",.has_arg=0,.flag=0,.val='a'},
-            {.name="n",.has_arg=1,.flag=0,.val='b'},
-            {.name="no-parallel",.has_arg=0,.flag=0,.val='c'},
-            {.name="v",.has_arg=0,.flag=0,.val='d'},
-            {.name="dry-run",.has_arg=0,.flag=0,.val='e'},
-            {.name=0,.has_arg=0,.flag=0,.val=0},
+            {.name = "date-size-only", .has_arg = 0, .flag = 0, .val = 'a'},
+            {.name = "n", .has_arg = 1, .flag = 0, .val = 'b'},
+            {.name = "no-parallel", .has_arg = 0, .flag = 0, .val = 'c'},
+            {.name = "v", .has_arg = 0, .flag = 0, .val = 'd'},
+            {.name = "dry-run", .has_arg = 0, .flag = 0, .val = 'e'},
+            {.name = 0, .has_arg = 0, .flag = 0, .val = 0},
     };
-    while((opt = getopt_long(argc, argv, "", my_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "", my_opts, NULL)) != -1) {
         switch (opt) {
-            case 'a':
+            case 'a' :
                 the_config->uses_md5 = false;
                 break;
 
-            case 'b':
+            case 'b' :
                 if (optarg) {
                     the_config->processes_count = atoi(optarg);
                 }
                 break;
 
-            case 'c':
+            case 'c' :
                 the_config->is_parallel = false;
                 break;
 
-            case 'd':
+            case 'd' :
                 the_config->verbose = true;
                 break;
 
-            case 'e':
+            case 'e' :
                 the_config->dry_run = true;
                 break;
         }

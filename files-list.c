@@ -30,13 +30,13 @@ void clear_files_list(files_list_t *list) {
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
 
-    if(list == NULL){
+    if (list == NULL) {
         list = malloc(sizeof (files_list_t));
         list->head = new_file;
         list->tail = new_file;
         return new_file;
     }
-    else if(list->head == NULL && list->tail == NULL){
+    else if (list->head == NULL && list->tail == NULL) {
         list->head = new_file;
         list->tail = new_file;
         return new_file;
@@ -60,20 +60,17 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     }
 
 
-    if(head2 == NULL){
+    if (head2 == NULL) {
         new_file->next = NULL;
         new_file->prev = list->tail;
         list->tail = new_file;
-    }
-
-    else{
+    } else {
         new_file->next = head2;
         new_file->prev = head2->prev;
 
-        if(head2->prev == NULL){
+        if (head2->prev == NULL) {
             list->head = new_file;
-        }
-        else{
+        } else {
             new_file->prev->next = new_file;
         }
 
@@ -112,9 +109,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
  *  @param start_of_dest the position of the name of the file in the destination dir (removing the dest path)
  *  @return a pointer to the element found, NULL if none were found.
  */
-files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) 
-{
-    
+files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) {
     if (list == NULL || file_path == NULL) {
         return NULL;
     }

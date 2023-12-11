@@ -42,8 +42,8 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     make_files_list(destination_list, the_config->destination);
 
     //Création des variables de parcours
-    files_list_entry_t * current_source = source_list->head;
-    files_list_entry_t * current_destination = destination_list->head;
+    files_list_entry_t *current_source = source_list->head;
+    files_list_entry_t *current_destination = destination_list->head;
 
     //Parcours des deux listes
     while (current_source != NULL && current_destination != NULL) {
@@ -68,7 +68,7 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
 
     //Variable de parcours
-    files_list_entry_t * current_difference = differences_list->head;
+    files_list_entry_t *current_difference = differences_list->head;
 
     //Parcours de la liste des differences
     while (current_difference != NULL) {
@@ -149,7 +149,7 @@ void make_files_list(files_list_t *list, char *target_path) {
     make_list(list,target_path);
 
     //Variable de parcours
-    files_list_entry_t * current = list->head;
+    files_list_entry_t *current = list->head;
 
     //Parcours de la liste
     while (current != NULL) {
@@ -262,21 +262,18 @@ void make_list(files_list_t *list, char *target) {
 
     DIR *dir = opendir(target);
 
-    struct dirent * dent;
+    struct dirent *dent;
 
     while ((dent = get_next_entry(dir)) != NULL) {
         //d_type existe sur linux je crois
-        if(strcmp(dent->d_name, ".") != 0 && strcmp(dent->d_name, "..") != 0){
+        if (strcmp(dent->d_name, ".") != 0 && strcmp(dent->d_name, "..") != 0) {
             //Si c'est un dossier on parcours le dossier de maniere recurcive
             if (dent->d_type == 4) {
                 make_list(list, concat_path("", target, dent->d_name));
-            }
-                //Si c'est un fichier on l'ajoute à la liste
-            else if (dent->d_type == 8) {
+            } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
                 add_file_entry(list,concat_path("", target, dent->d_name));
             }
         }
-
     }
 
     closedir(dir);
