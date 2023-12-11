@@ -28,56 +28,36 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
-
-    if (list == NULL) {
-        list = malloc(sizeof (files_list_t));
-        list->head = new_file;
-        list->tail = new_file;
-        return new_file;
-    }
-    else if (list->head == NULL && list->tail == NULL) {
-        list->head = new_file;
-        list->tail = new_file;
-        return new_file;
+    if (list == NULL || file_path == NULL) {
+        return NULL;
     }
 
-
-    files_list_entry_t *head1 = list->head;
-    files_list_entry_t *head2 = list->head;
-
-    while (head1 != NULL) {
-        if (strcmp(file_path, head1->path_and_name) == 0) {
-            //Le fichier existe déjà
-            return NULL;
-        }
-        head1 = head1->next;
+    files_list_entry_t *existing_entry = find_entry_by_name(list, file_path, 0, 0);
+    if (existing_entry != NULL) {
+        return existing_entry;
     }
 
-    //Trouver la bonne place pour le fichier
-    while (head2 != NULL && strcmp(head2->path_and_name, file_path) < 0) {
-        head2 = head2->next;
+    files_list_entry_t *new_entry = (files_list_entry_t *)malloc(sizeof(files_list_entry_t));
+    if (new_entry == NULL) {
+        return NULL;
     }
 
+    strncpy(new_entry->path_and_name, file_path, sizeof(new_entry->path_and_name) - 1);
+    new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0'; // Assurer la terminaison de la chaîne
 
-    if (head2 == NULL) {
-        new_file->next = NULL;
-        new_file->prev = list->tail;
-        list->tail = new_file;
-    } else {
-        new_file->next = head2;
-        new_file->prev = head2->prev;
-
-        if (head2->prev == NULL) {
-            list->head = new_file;
-        } else {
-            new_file->prev->next = new_file;
-        }
-
+    struct stat file_stat;
+    if (stat(file_path, &file_stat) != 0) {
+        free(new_entry);
+        return NULL;
     }
+    new_entry->mtime = file_stat.st_mtim;
+    new_entry->size = (uint64_t)file_stat.st_size;
+    new_entry->entry_type = (S_ISDIR(file_stat.st_mode)) ? DOSSIER : FICHIER;
+    new_entry->mode = file_stat.st_mode;
 
-    //Retourne la nouvelle entrée
-    return new_file;
+    add_entry_to_tail(list, new_entry);
+
+    return new_entry;
 }
 
 /*!
@@ -89,15 +69,24 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
-    entry->next = NULL;
-    entry->prev = list->tail;
-    list->tail->next = entry;
-    if (list->tail == entry) {
-        //success
+    if (list == NULL || entry == NULL) {
+        return -1;
+    }
+
+    if (list->head == NULL) {
+        list->head = entry;
+        list->tail = entry;
+        entry->next = NULL;
+        entry->prev = NULL;
         return 0;
     }
-    //fail
-    return -1;
+
+    list->tail->next = entry;
+    entry->prev = list->tail;
+    entry->next = NULL;
+    list->tail = entry;
+
+    return 0;
 }
 
 /*!
