@@ -79,9 +79,9 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
 
     //Vide de la memoire
-    clear_files_list(source_list);
+    /*clear_files_list(source_list);
     clear_files_list(destination_list);
-    clear_files_list(differences_list);
+    clear_files_list(differences_list);*/
 
 }
 
@@ -155,7 +155,7 @@ void make_files_list(files_list_t *list, char *target_path) {
     while (current != NULL) {
         //Récupération si possible de toutes les informations du fichier
         if (get_file_stats(current) == -1) {
-            perror("Impossible de récupérer les informations du fichier");
+            perror("Impossible de récupérer les informations du fichier a");
         }
         current = current->next;
     }
@@ -178,8 +178,8 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  * Use sendfile to copy the file, mkdir to create the directory
  */
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
-     const char *source_path = source_entry->path_and_name;
-     const char *destination_path = the_config->destination;
+     char *source_path = source_entry->path_and_name;
+     char *destination_path = the_config->destination;
 
      // Créer la structure stat pour obtenir des informations sur le fichier source
      struct stat source_stat;
@@ -218,8 +218,8 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
              exit(EXIT_FAILURE);
          }
 
-         // Créer le fichier de destination en écriture
-         int destination_fd = open(destination_path, O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
+	//Il faut qu'on récupere le path relatif du fichier de la source pour le remplacé par "test.txt"
+         int destination_fd = open(concat_path("",destination_path, "test.txt"), O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
          if (destination_fd == -1) {
              perror("Erreur lors de la création du fichier de destination");
              exit(EXIT_FAILURE);
