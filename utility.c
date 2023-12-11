@@ -14,7 +14,7 @@
  */
 char *concat_path(char *result, char *prefix, char *suffix) {
 
-   if(strlen(prefix) + strlen(suffix) < PATH_SIZE){
+   if(strlen(prefix) + strlen(suffix) > PATH_SIZE){
        return NULL;
    }
 
