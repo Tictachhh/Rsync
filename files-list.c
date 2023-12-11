@@ -28,6 +28,8 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
+    
+	
     if (list == NULL || file_path == NULL) {
         return NULL;
     }
@@ -44,16 +46,6 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
 
     strncpy(new_entry->path_and_name, file_path, sizeof(new_entry->path_and_name) - 1);
     new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0'; // Assurer la terminaison de la chaîne
-
-    struct stat file_stat;
-    if (stat(file_path, &file_stat) != 0) {
-        free(new_entry);
-        return NULL;
-    }
-    new_entry->mtime = file_stat.st_mtim;
-    new_entry->size = (uint64_t)file_stat.st_size;
-    new_entry->entry_type = (S_ISDIR(file_stat.st_mode)) ? DOSSIER : FICHIER;
-    new_entry->mode = file_stat.st_mode;
 
     add_entry_to_tail(list, new_entry);
 
@@ -74,6 +66,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
     }
 
     if (list->head == NULL) {
+	
         list->head = entry;
         list->tail = entry;
         entry->next = NULL;
