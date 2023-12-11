@@ -28,65 +28,55 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    if (list == NULL || file_path == NULL) {
-        // Mauvaise utilisation de la fonction
-        return NULL;
+    files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
+
+    if (list == NULL) {
+        list = malloc(sizeof (files_list_t));
+        list->head = new_file;
+        list->tail = new_file;
+        return new_file;
+    }
+    else if (list->head == NULL && list->tail == NULL) {
+        list->head = new_file;
+        list->tail = new_file;
+        return new_file;
     }
 
-    // Vérifie si le fichier existe déjà dans la liste
-    files_list_entry_t *current = list->head;
-    while (current != NULL) {
-        if (strcmp(file_path, current->path_and_name) == 0) {
-            // Le fichier existe déjà, ne rien faire
+
+    files_list_entry_t *head1 = list->head;
+    files_list_entry_t *head2 = list->head;
+
+    while (head1 != NULL) {
+        if (strcmp(file_path, head1->path_and_name) == 0) {
+            //Le fichier existe déjà
             return NULL;
         }
-        current = current->next;
+        head1 = head1->next;
     }
 
-    // Crée une nouvelle entrée pour le fichier
-    files_list_entry_t *new_file = malloc(sizeof(files_list_entry_t));
-    if (new_file == NULL) {
-        // Échec de l'allocation mémoire
-        return NULL;
+    //Trouver la bonne place pour le fichier
+    while (head2 != NULL && strcmp(head2->path_and_name, file_path) < 0) {
+        head2 = head2->next;
     }
 
-    // Copie le chemin du fichier dans la nouvelle entrée
-    size_t path_length = strlen(file_path);
-    new_file->path_and_name = malloc(path_length + 1);
-    if (new_file->path_and_name[0] == '\0') {
-        // Échec de l'allocation mémoire pour le chemin
-        free(new_file);
-        return NULL;
-    }
-    strcpy(new_file->path_and_name, file_path);
 
-    // Ajoute la nouvelle entrée dans la liste de manière ordonnée (par strcmp)
-    files_list_entry_t *prev = NULL;
-    files_list_entry_t *current = list->head;
-
-    while (current != NULL && strcmp(file_path, current->path_and_name) > 0) {
-        prev = current;
-        current = current->next;
-    }
-
-    new_file->next = current;
-    new_file->prev = prev;
-
-    if (prev != NULL) {
-        prev->next = new_file;
-    } else {
-        // La nouvelle entrée est la nouvelle tête de liste
-        list->head = new_file;
-    }
-
-    if (current != NULL) {
-        current->prev = new_file;
-    } else {
-        // La nouvelle entrée est la nouvelle queue de liste
+    if (head2 == NULL) {
+        new_file->next = NULL;
+        new_file->prev = list->tail;
         list->tail = new_file;
+    } else {
+        new_file->next = head2;
+        new_file->prev = head2->prev;
+
+        if (head2->prev == NULL) {
+            list->head = new_file;
+        } else {
+            new_file->prev->next = new_file;
+        }
+
     }
 
-    // Succès, retourne la nouvelle entrée
+    //Retourne la nouvelle entrée
     return new_file;
 }
 
