@@ -141,6 +141,11 @@ int compute_file_md5(files_list_entry_t *entry) {
  * @return true if directory exists, false else
  */
 bool directory_exists(char *path_to_dir) {
+    if (path_to_dir == NULL) {
+        fprintf(stderr, "Erreur : Le chemin du répertoire est NULL.\n");
+        return false;
+    }
+
     DIR *dir = opendir(path_to_dir);
 
     if (dir) {
@@ -158,6 +163,11 @@ bool directory_exists(char *path_to_dir) {
  * Hint: try to open a file in write mode in the target directory.
  */
 bool is_directory_writable(char *path_to_dir) {
+    if (path_to_dir == NULL) {
+        fprintf(stderr, "Erreur : Le chemin du répertoire est NULL.\n");
+        return false;
+    }
+
     //Création d'un fichier temporaire pour effectuer les tests
     const char *test_file_name = "test.tmp";
 
