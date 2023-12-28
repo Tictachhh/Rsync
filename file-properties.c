@@ -41,45 +41,12 @@ int get_file_stats(files_list_entry_t *entry) {
 
     off_t size = file_info.st_size;
 
-    int entry_type;
+    file_type_t entry_type;
     if (S_ISDIR(mode)) {
         entry_type = 1; //Pour un dossier
     } else if (S_ISREG(mode)) {
         entry_type = 0; //Pour un fichier
-
-        FILE *file = fopen(entry->path_and_name, "r");
-        if (!file) {
-            perror("Erreur lors de l'ouverture du fichier");
-            return -1;
-        }
-        unsigned char md5sum[MD5_DIGEST_LENGTH];
-
-        EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
-        if (!md5_ctx) {
-            perror("Erreur lors de la création du contexte MD5");
-            fclose(file);
-            return -1;
-        }
-
-        EVP_DigestInit(md5_ctx, EVP_md5());
-
-        size_t read_bytes;
-        unsigned char buffer[4096];
-
-        while ((read_bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-            EVP_DigestUpdate(md5_ctx, buffer, read_bytes);
-        }
-
-        EVP_DigestFinal(md5_ctx, md5sum, NULL);
-        EVP_MD_CTX_free(md5_ctx);
-
-        fclose(file);
-
-        printf("MD5 Sum: ");
-        for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-            printf("%02x", md5sum[i]);
-        }
-        printf("\n");
+	compute_file_md5(entry);
     } else {
 	perror("Erreur");
         return -1;
