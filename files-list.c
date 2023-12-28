@@ -28,8 +28,6 @@ void clear_files_list(files_list_t *list) {
  *  @return 0 if success, -1 else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
-    
-	
     if (list == NULL || file_path == NULL) {
         return NULL;
     }
@@ -45,13 +43,35 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     }
 
     strncpy(new_entry->path_and_name, file_path, sizeof(new_entry->path_and_name) - 1);
-    new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0'; // Assurer la terminaison de la chaîne
+    new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0'; 
+    new_entry->prev = NULL;
+    new_entry->next = NULL;
 
-    add_entry_to_tail(list, new_entry);
+    if (list->head == NULL || strcmp(file_path, list->head->path_and_name) < 0) {
+        // Insérer au début de la liste (liste vide ou nouveau premier élément)
+        new_entry->next = list->head;
+        if (list->head != NULL) {
+            list->head->prev = new_entry;
+        }
+        list->head = new_entry;
+    } else {
+        files_list_entry_t *current = list->head;
+        while (current->next != NULL && strcmp(file_path, current->next->path_and_name) > 0) {
+            current = current->next;
+        }
+
+        new_entry->next = current->next;
+        new_entry->prev = current;
+
+        if (current->next != NULL) {
+            current->next->prev = new_entry;
+        }
+
+        current->next = new_entry;
+    }
 
     return new_entry;
 }
-
 /*!
  * @brief add_entry_to_tail adds an entry directly to the tail of the list
  * It supposes that the entries are provided already ordered, e.g. when a lister process sends its list's
