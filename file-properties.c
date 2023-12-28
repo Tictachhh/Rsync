@@ -27,6 +27,7 @@
  *   - entry type (DOSSIER)
  * @return -1 in case of error, 0 else
  */
+
 int get_file_stats(files_list_entry_t *entry) {
     struct stat file_info;
 
@@ -35,27 +36,33 @@ int get_file_stats(files_list_entry_t *entry) {
         return -1;
     }
 
-    mode_t mode = file_info.st_mode;
+    entry->mode = file_info.st_mode;
+    entry->mtime.tv_sec = file_info.st_mtime;
+    entry->mtime.tv_nsec = file_info.st_mtimensec;
+    entry->size = file_info.st_size;
 
-    long long mtime = file_info.st_mtime;
-
-    off_t size = file_info.st_size;
-
-    file_type_t entry_type;
-    if (S_ISDIR(mode)) {
-        entry_type = 1; //Pour un dossier
-    } else if (S_ISREG(mode)) {
-        entry_type = 0; //Pour un fichier
-	compute_file_md5(entry);
+    if (S_ISDIR(entry->mode)) {
+        entry->entry_type = DOSSIER;
+    } else if (S_ISREG(entry->mode)) {
+        entry->entry_type = FICHIER;
+        if (compute_file_md5(entry) != 0) {
+            perror("Erreur lors du calcul de la somme MD5");
+            return -1;
+        }
     } else {
-	perror("Erreur");
+        perror("Erreur");
         return -1;
     }
 
-    printf("Mode: %o\n", mode);
-    printf("Mtime: %lld\n", mtime);
-    printf("Size: %ld\n", size);
-    printf("Entry Type: %s\n", entry_type == 0 ? "FICHIER" : "DOSSIER");
+    printf("Mode: %o\n", entry->mode);
+    printf("Mtime: %ld\n", entry->mtime.tv_sec); // Utilisez %ld pour un long
+    printf("Size: %ld\n", entry->size);
+    printf("Entry Type: %s\n", entry->entry_type == FICHIER ? "FICHIER" : "DOSSIER");
+    printf("MD5 Sum: ");
+    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+        printf("%02x", entry->md5sum[i]);
+    }
+    printf("\n");
 
     return 0;
 }
