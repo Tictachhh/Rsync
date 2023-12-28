@@ -260,19 +260,16 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
  */
 void make_list(files_list_t *list, char *target) {
 
-    DIR *dir = opendir(target);
+    DIR *dir = open_dir(target);
 
     struct dirent *dent;
 
     while ((dent = get_next_entry(dir)) != NULL) {
-        //d_type existe sur linux je crois
-        if (strcmp(dent->d_name, ".") != 0 && strcmp(dent->d_name, "..") != 0) {
-            //Si c'est un dossier on parcours le dossier de maniere recurcive
-            if (dent->d_type == 4) {
-                make_list(list, concat_path("", target, dent->d_name));
-            } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
-                add_file_entry(list,concat_path("", target, dent->d_name));
-            }
+        //Si c'est un dossier on parcours le dossier de maniere recurcive
+        if (dent->d_type == 4) {
+            make_list(list, concat_path("", target, dent->d_name));
+        } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
+            add_file_entry(list,concat_path("", target, dent->d_name));
         }
     }
 
@@ -295,5 +292,12 @@ DIR *open_dir(char *path) {
  * Relevant entries are all regular files and dir, except . and ..
  */
 struct dirent *get_next_entry(DIR *dir) {
-    return readdir(dir);
+    struct dirent *dent;
+    dent = readdir(dir);
+
+    if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0){
+        get_next_entry(dir);
+    }
+
+    return dent;
 }
