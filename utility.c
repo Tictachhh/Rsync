@@ -18,21 +18,16 @@ char *concat_path(char *result, char *prefix, char *suffix) {
        return NULL;
    }
 
-   result = malloc((strlen(prefix) + strlen(suffix)) * sizeof (char));
+   result = malloc((strlen(prefix) + strlen(suffix) + 1) * sizeof (char));
 
-   int i = 0, j = 0;
-
-   for(i = 0; i < strlen(prefix); i++){
-       result[i] = prefix[i];
-   }
-
-   if(prefix[strlen(prefix) - 1]  != '/'){
-       result[i] = '/';
-   }
-
-   for(j = 0; j < strlen(suffix); j++){
-       result[j + i + 1] = suffix[j];
-   }
+    if (strlen(prefix) + strlen(suffix) + 2 > PATH_SIZE) {
+        return NULL;
+    }
+    strcpy(result, prefix);
+    if (prefix[strlen(prefix) - 1] != '/') {
+        strcat(result, "/");
+    }
+    strcat(result, suffix);
 
    return result;
 
