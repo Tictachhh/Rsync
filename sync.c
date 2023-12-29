@@ -44,27 +44,40 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     //Création des variables de parcours
     files_list_entry_t *current_source = source_list->head;
     files_list_entry_t *current_destination = destination_list->head;
-
-    //Parcours des deux listes
-    while (current_source != NULL && current_destination != NULL) {
-
-        //S'il y a une difference, on l'ajoute à la liste des differences
-        if (mismatch(current_source,current_destination, the_config->uses_md5)) {
-            add_entry_to_tail(differences_list,current_source);
-        }
-
-        current_source = current_source->next;
-        current_destination = current_destination->next;
-    }
-
-    //Si la taille de la liste source est plus grande que la taille de la liste destination
-    if (current_source != NULL && current_destination == NULL) {
-        //Parcours de ce qui reste et ajout des elements dans la liste des differences
+	
+	//Si la taille de la liste source est plus grande que la taille de la liste destination
+    if (current_destination == NULL) {
+        //ajout des elements dans la liste des differences
         while (current_source != NULL) {
             add_entry_to_tail(differences_list,current_source);
+
             current_source = current_source->next;
         }
     }
+    else{
+	//Parcours des deux listes
+	    while (current_source != NULL){
+
+		current_destination = destination_list->head;
+
+		while(current_destination != NULL) {
+			printf("lalal");
+			//S'il y a une difference, on l'ajoute à la liste des differences
+			if (mismatch(current_source,current_destination, the_config->uses_md5)) {
+				add_entry_to_tail(differences_list,current_source);
+			}
+			current_destination = current_destination->next;
+		}
+		
+		
+		current_source = current_source->next;
+	    }
+
+    }
+
+    
+
+    
 
 
     //Variable de parcours
@@ -73,6 +86,7 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     //Parcours de la liste des differences
     while (current_difference != NULL) {
         //Copie des differences
+	
         copy_entry_to_destination(current_difference,the_config);
         current_difference = current_difference->next;
     }
@@ -154,6 +168,8 @@ void make_files_list(files_list_t *list, char *target_path) {
     //Parcours de la liste
     while (current != NULL) {
         //Récupération si possible de toutes les informations du fichier
+
+	printf("\nPath : %s\n", current->path_and_name);
         if (get_file_stats(current) == -1) {
             perror("Impossible de récupérer les informations du fichier a");
         }
@@ -179,9 +195,31 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  */
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
      char *source_path = source_entry->path_and_name;
-     char *destination_path = the_config->destination;
+     char *destination_path = malloc(sizeof(the_config->destination)+
+				sizeof(source_entry->path_and_name) - 
+				sizeof(the_config->source));
 
-     // Créer la structure stat pour obtenir des informations sur le fichier source
+	//Creation du nouveau path
+
+	int i,j;
+	for( i = 0; i < strlen(the_config->destination); i++){
+		destination_path[i] = the_config->destination[i];
+	}
+
+	for(j=strlen(the_config->source); j < strlen(source_entry->path_and_name); j++){
+		destination_path[i] = source_entry->path_and_name[j];
+		i++;
+	}
+
+	printf("%s",destination_path);
+
+
+
+	
+
+
+
+     /*// Créer la structure stat pour obtenir des informations sur le fichier source
      struct stat source_stat;
      if (stat(source_path, &source_stat) == -1) {
          perror("Erreur lors de la récupération des informations sur le fichier source");
@@ -248,7 +286,7 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
      if (utimes(destination_path, times) == -1) {
          perror("Erreur lors de la copie des attributs de temps");
          exit(EXIT_FAILURE);
-     }
+     }*/
 }
 
 /*!
@@ -266,12 +304,14 @@ void make_list(files_list_t *list, char *target) {
 
     while ((dent = get_next_entry(dir)) != NULL) {
         //Si c'est un dossier on parcours le dossier de maniere recurcive
+	
         if (dent->d_type == 4) {
             make_list(list, concat_path("", target, dent->d_name));
         } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
             add_file_entry(list,concat_path("", target, dent->d_name));
         }
     }
+    
 
     closedir(dir);
 }
@@ -295,8 +335,12 @@ struct dirent *get_next_entry(DIR *dir) {
     struct dirent *dent;
     dent = readdir(dir);
 
+    if(dent == NULL){
+	return NULL;
+    }	
+
     if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0){
-        get_next_entry(dir);
+	dent = get_next_entry(dir);
     }
 
     return dent;
