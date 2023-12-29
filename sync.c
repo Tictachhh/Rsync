@@ -198,10 +198,13 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
      char *destination_path = malloc(sizeof(the_config->destination)+
 				sizeof(source_entry->path_and_name) - 
 				sizeof(the_config->source));
+char *destination_path_without_name = malloc(sizeof(the_config->destination)+
+				sizeof(source_entry->path_and_name) - 
+				sizeof(the_config->source));
 
-	//Creation du nouveau path
+	//Creation de la nouvelle chaine de caractere du nouveau path
 
-	int i,j;
+	int i,j,k,l = -1;
 	for( i = 0; i < strlen(the_config->destination); i++){
 		destination_path[i] = the_config->destination[i];
 	}
@@ -211,25 +214,46 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
 		i++;
 	}
 
-	printf("%s",destination_path);
+	//Suppression du nom
+	
+	strcpy(destination_path_without_name,destination_path);
 
-    char * tempPath = malloc(sizeof(char) * (strlen(destination_path)+1));
+	for(k = 0; k < strlen(destination_path_without_name); k++){
+		if(destination_path_without_name[k] == '/'){
+			l = k;
+		}
+	}
+
+	if(l!=-1){
+		destination_path_without_name[l] = '\0';		
+	}
+
+	printf("%s",destination_path);
+	printf("%s",destination_path_without_name);
+
+
+	//Creation des dossiers nécessaires
+
+    char * tempPath = malloc(sizeof(char) * (strlen(destination_path_without_name)+1));
     
     for(int i = 0; i < strlen(tempPath); i++){
         tempPath[i] = '\0';
         }
     int cpt = 0;
-    for(int i = 0; i < strlen(destination_path); i++){
+    for(int i = 0; i < strlen(destination_path_without_name); i++){
         
-        tempPath[cpt] = destination_path[i];
+        tempPath[cpt] = destination_path_without_name[i];
         tempPath[cpt+1] = '\0';
         cpt++;
         
-        if(destination_path[i] == '/'){
+        if(destination_path_without_name[i] == '/'){
             
             if ( chdir( tempPath ) != 0 ) {
                 printf("Fonctionne pas pour %s\n", tempPath);
                 printf("Creation du dossier %s\n", tempPath);
+		
+		
+		
                 if ( mkdir( tempPath, 0755 ) != 0 ) {
                     printf("Impossible de créer le dossier %s : \n", tempPath );
                     return ;
@@ -269,33 +293,18 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
     else{
         printf("Fonctionne pour %s\n", tempPath);
         }
-    }
 
 	
 
 
 
-     /*// Créer la structure stat pour obtenir des informations sur le fichier source
+     // Créer la structure stat pour obtenir des informations sur le fichier source
      struct stat source_stat;
      if (stat(source_path, &source_stat) == -1) {
          perror("Erreur lors de la récupération des informations sur le fichier source");
          exit(EXIT_FAILURE);
      }
 
-     // Ajuster les chemins pour éviter les préfixes répétés
-     size_t source_len = strlen(source_path);
-     size_t dest_len = strlen(destination_path);
-
-     // Assurer que le chemin source est inclus dans le chemin de destination
-     if (dest_len > source_len && strncmp(source_path, destination_path, source_len) == 0) {
-         // Le préfixe du chemin source est inclus dans le chemin de destination
-         destination_path += source_len;
-
-         // Ignorer les éventuels caractères de séparation supplémentaires
-         if (destination_path[0] == '/' || destination_path[0] == '\\') {
-             destination_path++;
-         }
-     }
 
      // Vérifier si le fichier source est un répertoire
      if (S_ISDIR(source_stat.st_mode)) {
@@ -313,7 +322,7 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
          }
 
 	//Il faut qu'on récupere le path relatif du fichier de la source pour le remplacé par "test.txt"
-         int destination_fd = open(concat_path("",destination_path, "test.txt"), O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
+         int destination_fd = open(destination_path, O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
          if (destination_fd == -1) {
              perror("Erreur lors de la création du fichier de destination");
              exit(EXIT_FAILURE);
@@ -342,7 +351,7 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
      if (utimes(destination_path, times) == -1) {
          perror("Erreur lors de la copie des attributs de temps");
          exit(EXIT_FAILURE);
-     }*/
+     }
 }
 
 /*!
@@ -363,8 +372,8 @@ void make_list(files_list_t *list, char *target) {
 	
         if (dent->d_type == 4) {
             make_list(list, concat_path("", target, dent->d_name));
-        } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
-            add_file_entry(list,concat_path("", target, dent->d_name));
+        } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste            
+		add_file_entry(list,concat_path("", target, dent->d_name));
         }
     }
     
