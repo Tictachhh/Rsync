@@ -36,11 +36,14 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     if (existing_entry != NULL) {
         return existing_entry;
     }
-
-    files_list_entry_t *new_entry = (files_list_entry_t *)malloc(sizeof(files_list_entry_t));
+	printf("\n2[%s]\n",file_path);
+	
+    files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
     if (new_entry == NULL) {
         return NULL;
     }
+
+	printf("\n3[%s]\n",file_path);
 
     strncpy(new_entry->path_and_name, file_path, sizeof(new_entry->path_and_name) - 1);
     new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0'; 
@@ -85,19 +88,21 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
         return -1;
     }
 
+	files_list_entry_t * new_el = malloc(sizeof(*entry));
+	*new_el = *entry;
+
     if (list->head == NULL) {
-	
-        list->head = entry;
-        list->tail = entry;
-        entry->next = NULL;
-        entry->prev = NULL;
+        list->head = new_el;
+        list->tail = new_el;
+        new_el->next = NULL;
+        new_el->prev = NULL;
         return 0;
     }
 
-    list->tail->next = entry;
-    entry->prev = list->tail;
-    entry->next = NULL;
-    list->tail = entry;
+    list->tail->next = new_el;
+    new_el->prev = list->tail;
+    new_el->next = NULL;
+    list->tail = new_el;
 
     return 0;
 }
