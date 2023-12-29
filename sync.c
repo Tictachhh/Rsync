@@ -213,7 +213,63 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
 
 	printf("%s",destination_path);
 
+    char * tempPath = malloc(sizeof(char) * (strlen(destination_path)+1));
+    
+    for(int i = 0; i < strlen(tempPath); i++){
+        tempPath[i] = '\0';
+        }
+    int cpt = 0;
+    for(int i = 0; i < strlen(destination_path); i++){
+        
+        tempPath[cpt] = destination_path[i];
+        tempPath[cpt+1] = '\0';
+        cpt++;
+        
+        if(destination_path[i] == '/'){
+            
+            if ( chdir( tempPath ) != 0 ) {
+                printf("Fonctionne pas pour %s\n", tempPath);
+                printf("Creation du dossier %s\n", tempPath);
+                if ( mkdir( tempPath, 0755 ) != 0 ) {
+                    printf("Impossible de créer le dossier %s : \n", tempPath );
+                    return ;
+                }
+                
+                if ( chdir( tempPath ) != 0 ) {
+                    printf("Abandon");
+                    return;
+                }
+                
+                }
+            else{
+                printf("Fonctionne pour %s\n", tempPath);
+            }
+            
 
+            tempPath[0] = '\0';
+            
+            cpt = 0;
+            }
+        
+        }
+    
+    if ( chdir( tempPath ) != 0 ) {
+        printf("Fonctionne pas pour %s\n", tempPath);
+        printf("Creation du dossier %s\n", tempPath);
+        if ( mkdir( tempPath, 0755 ) != 0 ) {
+            printf("Impossible de créer le dossier %s : \n", tempPath );
+            return ;
+        }
+        
+        if ( chdir( tempPath ) != 0 ) {
+            printf("Abandon");
+            return;
+        }
+        }
+    else{
+        printf("Fonctionne pour %s\n", tempPath);
+        }
+    }
 
 	
 
