@@ -13,7 +13,14 @@
  * @return the result of the msgsnd function
  * Used by the specialized functions send_analyze*
  */
-int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) {
+int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) 
+{
+    files_list_entry_transmit_t entree_fichier_transmis;
+    entree_fichier_transmis.mtype = recipient;
+    entree_fichier_transmis.op_code = cmd_code;
+    entree_fichier_transmis.payload = *file_entry;
+    int result = msgsnd(msg_queue, &entree_fichier_transmis, sizeof(files_list_entry_transmit_t), 0);
+    return result; // Retourner le résultat de l'envoi du message
 }
 
 /*!
