@@ -69,7 +69,6 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
                     i++;
                 }
                 j++;
-                printf("{%d;%d}",i,j);
                 if (i == j) {
                     add_entry_to_tail(differences_list,current_source);
                 }
