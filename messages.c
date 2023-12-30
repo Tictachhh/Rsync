@@ -20,7 +20,7 @@ int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry
     entree_fichier_transmis.op_code = cmd_code;
     entree_fichier_transmis.payload = *file_entry;
     int result = msgsnd(msg_queue, &entree_fichier_transmis, sizeof(files_list_entry_transmit_t), 0);
-    return result; // Retourner le résultat de l'envoi du message
+    return result;
 }
 
 /*!
@@ -38,7 +38,6 @@ int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
     strcpy(command.path, target_dir);
     
     int result = msgsnd(msg_queue, &command, sizeof(command.path), 0);
-    
     return result;
 }
 
