@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
-#include <openssl/md5.h>
 
 /*!
  * @brief synchronize is the main function for synchronization
