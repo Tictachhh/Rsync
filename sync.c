@@ -113,43 +113,22 @@ bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
         return true;
     }
 
-    char name1[100], name2[100];
-    int place_letter = 0;
-    //récupération du nom depuis le chemin du fichier
-    for (int i = strlen(lhd->path_and_name) - 1; i != '/'; i--) {
-        name1[place_letter] = lhd->path_and_name[i];
-        place_letter++;
+    // Comparaison de la taille
+    if (lhd->size != rhd->size) {
+        return true;
     }
-    place_letter = 0;
-    //récupération du nom depuis le chemin du fichier
-    for (int j = strlen(rhd->path_and_name) - 1; j != '/'; j--) {
-        name2[place_letter] = rhd->path_and_name[j];
-        place_letter++;
+
+    // Comparaison du MD5 si has_md5 est true
+    if (has_md5 && memcmp(lhd->md5sum, rhd->md5sum, sizeof(lhd->md5sum)) != 0) {
+        return true;
     }
-    //si has_md5 est utilisé et sinon
-    if (!has_md5) {
-        //comparaison md5
-        if (strcmp(name1, name2) == 0) {
-            return false;
-        } else {
-            return true;
-        }
-    } else {
-        char md5_1[100], md5_2[100];
-        //conversion md5 en chaîne de caractères
-        for (int k = 0; lhd->md5sum[k] != '\0'; k++) {
-            md5_1[k] = lhd->md5sum[k];
-        }
-        for (int l = 0; rhd->md5sum[l] != '\0'; l++) {
-            md5_2[l] = rhd->md5sum[l];
-        }
-        //comparaison nom + md5
-        if (strcmp(name1, name2) == 0 && strcmp(md5_1, md5_2) == 0) {
-            return false;
-        } else {
-            return true;
-        }
+
+    // Comparaison de la date de modification (mtime)
+    if (lhd->mtime.tv_sec != rhd->mtime.tv_sec || lhd->mtime.tv_nsec != rhd->mtime.tv_nsec) {
+        return true;
     }
+
+    return false;  // Si toutes les propriétés sont identiques
 }
 
 /*!
