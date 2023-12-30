@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <openssl/md5.h>
 
 /*!
  * @brief synchronize is the main function for synchronization
@@ -44,8 +45,8 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     //Création des variables de parcours
     files_list_entry_t *current_source = source_list->head;
     files_list_entry_t *current_destination = destination_list->head;
-	
-	//Si la taille de la liste source est plus grande que la taille de la liste destination
+
+    //Si la taille de la liste source est plus grande que la taille de la liste destination
     if (current_destination == NULL) {
         //ajout des elements dans la liste des differences
         while (current_source != NULL) {
@@ -55,29 +56,32 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
         }
     }
     else{
-	//Parcours des deux listes
-	    while (current_source != NULL){
 
-		current_destination = destination_list->head;
+        //Parcours des deux listes
+        while (current_source != NULL){
 
-		while(current_destination != NULL) {
-			printf("lalal");
-			//S'il y a une difference, on l'ajoute à la liste des differences
-			if (mismatch(current_source,current_destination, the_config->uses_md5)) {
-				add_entry_to_tail(differences_list,current_source);
-			}
-			current_destination = current_destination->next;
-		}
-		
-		
-		current_source = current_source->next;
-	    }
+            current_destination = destination_list->head;
+            int i = 0;
+            int j = 0;
+            while(current_destination != NULL) {
+                //S'il y a une difference, on l'ajoute à la liste des differences
+                if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
+                    i++;
+                }
+                j++;
+                printf("{%d;%d}",i,j);
+                if (i == j) {
+                    add_entry_to_tail(differences_list,current_source);
+                }
+                current_destination = current_destination->next;
+            }
+
+
+            current_source = current_source->next;
+        }
+
 
     }
-
-    
-
-    
 
 
     //Variable de parcours
@@ -86,17 +90,9 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     //Parcours de la liste des differences
     while (current_difference != NULL) {
         //Copie des differences
-	
         copy_entry_to_destination(current_difference,the_config);
         current_difference = current_difference->next;
     }
-
-
-    //Vide de la memoire
-    /*clear_files_list(source_list);
-    clear_files_list(destination_list);
-    clear_files_list(differences_list);*/
-
 }
 
 /*!
@@ -108,11 +104,6 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
  */
 
 bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
-    //vérification de l'existence des noms
-    if (strcmp(lhd->path_and_name, "") == 1 || strcmp(rhd->path_and_name, "") == 1) {
-        return true;
-    }
-
     // Comparaison de la taille
     if (lhd->size != rhd->size) {
         return true;
@@ -124,7 +115,7 @@ bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
     }
 
     // Comparaison de la date de modification (mtime)
-    if (lhd->mtime.tv_sec != rhd->mtime.tv_sec || lhd->mtime.tv_nsec != rhd->mtime.tv_nsec) {
+    if (lhd->mtime.tv_sec != rhd->mtime.tv_sec) {
         return true;
     }
 
@@ -148,7 +139,7 @@ void make_files_list(files_list_t *list, char *target_path) {
     while (current != NULL) {
         //Récupération si possible de toutes les informations du fichier
 
-	printf("\nPath : %s\n", current->path_and_name);
+        printf("\nPath : %s\n", current->path_and_name);
         if (get_file_stats(current) == -1) {
             perror("Impossible de récupérer les informations du fichier a");
         }
@@ -173,89 +164,89 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  * Use sendfile to copy the file, mkdir to create the directory
  */
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
-     char *source_path = source_entry->path_and_name;
-     char *destination_path = malloc(sizeof(the_config->destination)+
-				sizeof(source_entry->path_and_name) - 
-				sizeof(the_config->source));
-char *destination_path_without_name = malloc(sizeof(the_config->destination)+
-				sizeof(source_entry->path_and_name) - 
-				sizeof(the_config->source));
+    char *source_path = source_entry->path_and_name;
+    char *destination_path = malloc(sizeof(the_config->destination)+
+                                    sizeof(source_entry->path_and_name) -
+                                    sizeof(the_config->source));
+    char *destination_path_without_name = malloc(sizeof(the_config->destination)+
+                                                 sizeof(source_entry->path_and_name) -
+                                                 sizeof(the_config->source));
 
-	//Creation de la nouvelle chaine de caractere du nouveau path
+    //Creation de la nouvelle chaine de caractere du nouveau path
 
-	int i,j,k,l = -1;
-	for( i = 0; i < strlen(the_config->destination); i++){
-		destination_path[i] = the_config->destination[i];
-	}
+    int i,j,k,l = -1;
+    for( i = 0; i < strlen(the_config->destination); i++){
+        destination_path[i] = the_config->destination[i];
+    }
 
-	for(j=strlen(the_config->source); j < strlen(source_entry->path_and_name); j++){
-		destination_path[i] = source_entry->path_and_name[j];
-		i++;
-	}
+    for(j=strlen(the_config->source); j < strlen(source_entry->path_and_name); j++){
+        destination_path[i] = source_entry->path_and_name[j];
+        i++;
+    }
 
-	//Suppression du nom
-	
-	strcpy(destination_path_without_name,destination_path);
+    //Suppression du nom
 
-	for(k = 0; k < strlen(destination_path_without_name); k++){
-		if(destination_path_without_name[k] == '/'){
-			l = k;
-		}
-	}
+    strcpy(destination_path_without_name,destination_path);
 
-	if(l!=-1){
-		destination_path_without_name[l] = '\0';		
-	}
+    for(k = 0; k < strlen(destination_path_without_name); k++){
+        if(destination_path_without_name[k] == '/'){
+            l = k;
+        }
+    }
 
-	printf("%s",destination_path);
-	printf("%s",destination_path_without_name);
+    if(l!=-1){
+        destination_path_without_name[l] = '\0';
+    }
+
+    printf("%s",destination_path);
+    printf("%s",destination_path_without_name);
 
 
-	//Creation des dossiers nécessaires
+    //Creation des dossiers nécessaires
 
     char * tempPath = malloc(sizeof(char) * (strlen(destination_path_without_name)+1));
-    
+
     for(int i = 0; i < strlen(tempPath); i++){
         tempPath[i] = '\0';
-        }
+    }
     int cpt = 0;
     for(int i = 0; i < strlen(destination_path_without_name); i++){
-        
+
         tempPath[cpt] = destination_path_without_name[i];
         tempPath[cpt+1] = '\0';
         cpt++;
-        
+
         if(destination_path_without_name[i] == '/'){
-            
+
             if ( chdir( tempPath ) != 0 ) {
                 printf("Fonctionne pas pour %s\n", tempPath);
                 printf("Creation du dossier %s\n", tempPath);
-		
-		
-		
+
+
+
                 if ( mkdir( tempPath, 0755 ) != 0 ) {
                     printf("Impossible de créer le dossier %s : \n", tempPath );
                     return ;
                 }
-                
+
                 if ( chdir( tempPath ) != 0 ) {
                     printf("Abandon");
                     return;
                 }
-                
-                }
+
+            }
             else{
                 printf("Fonctionne pour %s\n", tempPath);
             }
-            
+
 
             tempPath[0] = '\0';
-            
+
             cpt = 0;
-            }
-        
         }
-    
+
+    }
+
     if ( chdir( tempPath ) != 0 ) {
         printf("Fonctionne pas pour %s\n", tempPath);
         printf("Creation du dossier %s\n", tempPath);
@@ -263,74 +254,74 @@ char *destination_path_without_name = malloc(sizeof(the_config->destination)+
             printf("Impossible de créer le dossier %s : \n", tempPath );
             return ;
         }
-        
+
         if ( chdir( tempPath ) != 0 ) {
             printf("Abandon");
             return;
         }
-        }
+    }
     else{
         printf("Fonctionne pour %s\n", tempPath);
+    }
+
+
+
+
+
+    // Créer la structure stat pour obtenir des informations sur le fichier source
+    struct stat source_stat;
+    if (stat(source_path, &source_stat) == -1) {
+        perror("Erreur lors de la récupération des informations sur le fichier source");
+        exit(EXIT_FAILURE);
+    }
+
+
+    // Vérifier si le fichier source est un répertoire
+    if (S_ISDIR(source_stat.st_mode)) {
+        // Créer le répertoire de destination s'il n'existe pas
+        if (mkdir(destination_path, source_stat.st_mode) == -1) {
+            perror("Erreur lors de la création du répertoire de destination");
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        // Ouvrir le fichier source en lecture
+        int source_fd = open(source_path, O_RDONLY);
+        if (source_fd == -1) {
+            perror("Erreur lors de l'ouverture du fichier source");
+            exit(EXIT_FAILURE);
         }
 
-	
+        //Il faut qu'on récupere le path relatif du fichier de la source pour le remplacé par "test.txt"
+        int destination_fd = open(destination_path, O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
+        if (destination_fd == -1) {
+            perror("Erreur lors de la création du fichier de destination");
+            exit(EXIT_FAILURE);
+        }
 
+        // Utiliser sendfile pour copier le contenu du fichier source vers le fichier de destination
+        off_t offset = 0;
+        ssize_t bytes_sent = sendfile(destination_fd, source_fd, &offset, source_stat.st_size);
+        if (bytes_sent == -1) {
+            perror("Erreur lors de la copie du fichier");
+            exit(EXIT_FAILURE);
+        }
 
+        // Fermer les descripteurs de fichier
+        close(source_fd);
+        close(destination_fd);
+    }
 
-     // Créer la structure stat pour obtenir des informations sur le fichier source
-     struct stat source_stat;
-     if (stat(source_path, &source_stat) == -1) {
-         perror("Erreur lors de la récupération des informations sur le fichier source");
-         exit(EXIT_FAILURE);
-     }
+    // Copier les attributs de temps du fichier source vers le fichier de destination
+    struct timeval times[2];
+    times[0].tv_sec = source_stat.st_atime;
+    times[0].tv_usec = 0;
+    times[1].tv_sec = source_stat.st_mtime;
+    times[1].tv_usec = 0;
 
-
-     // Vérifier si le fichier source est un répertoire
-     if (S_ISDIR(source_stat.st_mode)) {
-         // Créer le répertoire de destination s'il n'existe pas
-         if (mkdir(destination_path, source_stat.st_mode) == -1) {
-             perror("Erreur lors de la création du répertoire de destination");
-             exit(EXIT_FAILURE);
-         }
-     } else {
-         // Ouvrir le fichier source en lecture
-         int source_fd = open(source_path, O_RDONLY);
-         if (source_fd == -1) {
-             perror("Erreur lors de l'ouverture du fichier source");
-             exit(EXIT_FAILURE);
-         }
-
-	//Il faut qu'on récupere le path relatif du fichier de la source pour le remplacé par "test.txt"
-         int destination_fd = open(destination_path, O_WRONLY | O_CREAT | O_TRUNC, source_stat.st_mode);
-         if (destination_fd == -1) {
-             perror("Erreur lors de la création du fichier de destination");
-             exit(EXIT_FAILURE);
-         }
-
-         // Utiliser sendfile pour copier le contenu du fichier source vers le fichier de destination
-         off_t offset = 0;
-         ssize_t bytes_sent = sendfile(destination_fd, source_fd, &offset, source_stat.st_size);
-         if (bytes_sent == -1) {
-             perror("Erreur lors de la copie du fichier");
-             exit(EXIT_FAILURE);
-         }
-
-         // Fermer les descripteurs de fichier
-         close(source_fd);
-         close(destination_fd);
-     }
-
-     // Copier les attributs de temps du fichier source vers le fichier de destination
-     struct timeval times[2];
-     times[0].tv_sec = source_stat.st_atime;
-     times[0].tv_usec = 0;
-     times[1].tv_sec = source_stat.st_mtime;
-     times[1].tv_usec = 0;
-
-     if (utimes(destination_path, times) == -1) {
-         perror("Erreur lors de la copie des attributs de temps");
-         exit(EXIT_FAILURE);
-     }
+    if (utimes(destination_path, times) == -1) {
+        perror("Erreur lors de la copie des attributs de temps");
+        exit(EXIT_FAILURE);
+    }
 }
 
 /*!
@@ -348,14 +339,14 @@ void make_list(files_list_t *list, char *target) {
 
     while ((dent = get_next_entry(dir)) != NULL) {
         //Si c'est un dossier on parcours le dossier de maniere recurcive
-	
+
         if (dent->d_type == 4) {
             make_list(list, concat_path("", target, dent->d_name));
-        } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste            
-		add_file_entry(list,concat_path("", target, dent->d_name));
+        } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
+            add_file_entry(list,concat_path("", target, dent->d_name));
         }
     }
-    
+
 
     closedir(dir);
 }
@@ -380,11 +371,11 @@ struct dirent *get_next_entry(DIR *dir) {
     dent = readdir(dir);
 
     if(dent == NULL){
-	return NULL;
-    }	
+        return NULL;
+    }
 
     if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0){
-	dent = get_next_entry(dir);
+        dent = get_next_entry(dir);
     }
 
     return dent;
