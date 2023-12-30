@@ -15,10 +15,6 @@
  */
 int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) 
 {
-    if (recipient < 0 || file_entry == NULL)
-    {
-        return -1;
-    }
     files_list_entry_transmit_t entree_fichier_transmis;
     entree_fichier_transmis.mtype = recipient;
     entree_fichier_transmis.op_code = cmd_code;
@@ -35,6 +31,15 @@ int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry
  * @return the result of msgsnd
  */
 int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
+
+    analyze_dir_command_t command;
+    command.mtype = recipient;
+    command.op_code =  COMMAND_CODE_ANALYZE_DIR;
+    strcpy(command.path, target_dir);
+    
+    int result = msgsnd(msg_queue, &command, sizeof(command.path), 0);
+    
+    return result;
 }
 
 // The 3 following functions are one-liners
