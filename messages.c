@@ -15,6 +15,10 @@
  */
 int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) 
 {
+    if (recipient < 0 || file_entry == NULL)
+    {
+        return -1;
+    }
     files_list_entry_transmit_t entree_fichier_transmis;
     entree_fichier_transmis.mtype = recipient;
     entree_fichier_transmis.op_code = cmd_code;
