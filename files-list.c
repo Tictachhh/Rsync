@@ -37,8 +37,10 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
         return existing_entry;
     }
 	printf("\n2[%s]\n",file_path);
-	
+
     files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
+
+printf("\n3[%s]\n",file_path);
     if (new_entry == NULL) {
         return NULL;
     }
@@ -141,10 +143,11 @@ files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size
 void display_files_list(files_list_t *list) {
     if (!list)
         return;
-    
+    printf("\n----\n");
     for (files_list_entry_t *cursor=list->head; cursor!=NULL; cursor=cursor->next) {
         printf("%s\n", cursor->path_and_name);
     }
+	printf("----\n");
 }
 
 /*!
