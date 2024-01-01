@@ -36,19 +36,19 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     if (existing_entry != NULL) {
         return existing_entry;
     }
-	printf("\n2[%s]\n",file_path);
+    printf("\n2[%s]\n",file_path);
 
     files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
 
-printf("\n3[%s]\n",file_path);
+    printf("\n3[%s]\n",file_path);
     if (new_entry == NULL) {
         return NULL;
     }
 
-	printf("\n3[%s]\n",file_path);
+    printf("\n3[%s]\n",file_path);
 
     strncpy(new_entry->path_and_name, file_path, sizeof(new_entry->path_and_name) - 1);
-    new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0'; 
+    new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0';
     new_entry->prev = NULL;
     new_entry->next = NULL;
 
@@ -90,8 +90,8 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
         return -1;
     }
 
-	files_list_entry_t * new_el = malloc(sizeof(*entry));
-	*new_el = *entry;
+    files_list_entry_t * new_el = malloc(sizeof(*entry));
+    *new_el = *entry;
 
     if (list->head == NULL) {
         list->head = new_el;
@@ -147,7 +147,7 @@ void display_files_list(files_list_t *list) {
     for (files_list_entry_t *cursor=list->head; cursor!=NULL; cursor=cursor->next) {
         printf("%s\n", cursor->path_and_name);
     }
-	printf("----\n");
+    printf("----\n");
 }
 
 /*!
@@ -158,7 +158,7 @@ void display_files_list(files_list_t *list) {
 void display_files_list_reversed(files_list_t *list) {
     if (!list)
         return;
-    
+
     for (files_list_entry_t *cursor=list->tail; cursor!=NULL; cursor=cursor->prev) {
         printf("%s\n", cursor->path_and_name);
     }

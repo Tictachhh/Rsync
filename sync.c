@@ -39,67 +39,65 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
     //Remplissage des listes
     make_files_list(source_list, the_config->source);
-
     make_files_list(destination_list, the_config->destination);
 
-
-    //Création des variables de parcours
-	
-	if(source_list == NULL){
-		return;		
-	}
-	
+    //Si la source est vide il n'y a rien à faire
+    if(source_list == NULL){
+        return;
+    }
 
     files_list_entry_t *current_source = source_list->head;
-    
 
-    //Si la taille de la liste source est plus grande que la taille de la liste destination
+    //Si la destination est vide il y aura que des differences donc on peut ajouter dans la
+    //liste des differences tous les fichiers de la source
     if (destination_list == NULL) {
         //ajout des elements dans la liste des differences
         while (current_source != NULL) {
             add_entry_to_tail(differences_list,current_source);
-
             current_source = current_source->next;
         }
     }
     else{
-        //Parcours des deux listes
+        //Recherche des differences
         while (current_source != NULL){
-
+            //Variable de parcours
             files_list_entry_t *current_destination = destination_list->head;
+
             int i = 0;
             int j = 0;
             while(current_destination != NULL) {
-                //S'il y a une difference, on l'ajoute à la liste des differences
+                //S'il y a une difference, on incremente le compteur
                 if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
                     i++;
                 }
                 j++;
-                
                 current_destination = current_destination->next;
             }
 
-		if (i == j) {
-                    add_entry_to_tail(differences_list,current_source);
-                }
+            //Si il y a eu que des difference,c'est que le fichier n'existe pas dans la destination
+            if (i == j) {
+                add_entry_to_tail(differences_list,current_source);
+            }
 
             current_source = current_source->next;
         }
 
 
     }
-	if(differences_list != NULL){
 
-		//Variable de parcours
-		    files_list_entry_t *current_difference = differences_list->head;
+    //Si il n'y pas de differences
+    if(differences_list != NULL){
 
-		    //Parcours de la liste des differences
-		    while (current_difference != NULL) {
-			//Copie des differences
-			copy_entry_to_destination(current_difference,the_config);
-			current_difference = current_difference->next;
-		    }
-	}
+        //Variable de parcours
+        files_list_entry_t *current_difference = differences_list->head;
+
+        //Parcours de la liste des differences
+        while (current_difference != NULL) {
+            //Copie des differences
+            copy_entry_to_destination(current_difference,the_config);
+            current_difference = current_difference->next;
+        }
+    }
 }
 
 /*!
@@ -145,7 +143,6 @@ void make_files_list(files_list_t *list, char *target_path) {
     //Parcours de la liste
     while (current != NULL) {
         //Récupération si possible de toutes les informations du fichier
-
         printf("\nPath : %s\n", current->path_and_name);
         if (get_file_stats(current) == -1) {
             perror("Impossible de récupérer les informations du fichier a");
@@ -171,15 +168,18 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  * Use sendfile to copy the file, mkdir to create the directory
  */
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
+    //récupération du path de la source
     char *source_path = source_entry->path_and_name;
+
+    //creation du fichier de destination du fichier avec le nom
     char *destination_path = malloc(sizeof(the_config->destination)+
                                     sizeof(source_entry->path_and_name) -
                                     sizeof(the_config->source));
+
+    //creation du fichier de destination du fichier sans le nom
     char *destination_path_without_name = malloc(sizeof(the_config->destination)+
                                                  sizeof(source_entry->path_and_name) -
                                                  sizeof(the_config->source));
-
-    //Creation de la nouvelle chaine de caractere du nouveau path
 
     int i,j,k,l = -1;
     for( i = 0; i < strlen(the_config->destination); i++){
@@ -211,69 +211,48 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
 
     //Creation des dossiers nécessaires
 
-    char * tempPath = malloc(sizeof(char) * (strlen(destination_path_without_name)+1));
-
-    for(int i = 0; i < strlen(tempPath); i++){
-        tempPath[i] = '\0';
-    }
+    char * tempPath = calloc(strlen(destination_path_without_name)+1, sizeof(char));
     int cpt = 0;
-    for(int i = 0; i < strlen(destination_path_without_name); i++){
+    for(int a = 0; a < strlen(destination_path_without_name); a++){
 
-        tempPath[cpt] = destination_path_without_name[i];
+        tempPath[cpt] = destination_path_without_name[a];
         tempPath[cpt+1] = '\0';
         cpt++;
 
-        if(destination_path_without_name[i] == '/'){
-
+        if(destination_path_without_name[a] == '/'){
+            //Si le dossier existe pas
             if ( chdir( tempPath ) != 0 ) {
-                printf("Fonctionne pas pour %s\n", tempPath);
-                printf("Creation du dossier %s\n", tempPath);
-
-
-
+                //Creation du dossier
                 if ( mkdir( tempPath, 0755 ) != 0 ) {
                     printf("Impossible de créer le dossier %s : \n", tempPath );
                     return ;
                 }
-
+                //Placement relatif dans ce dossier
                 if ( chdir( tempPath ) != 0 ) {
                     printf("Abandon");
                     return;
                 }
-
             }
-            else{
-                printf("Fonctionne pour %s\n", tempPath);
-            }
-
 
             tempPath[0] = '\0';
-
             cpt = 0;
         }
 
     }
 
+    //Si le dossier existe pas
     if ( chdir( tempPath ) != 0 ) {
-        printf("Fonctionne pas pour %s\n", tempPath);
-        printf("Creation du dossier %s\n", tempPath);
+        //Creation du dossier
         if ( mkdir( tempPath, 0755 ) != 0 ) {
             printf("Impossible de créer le dossier %s : \n", tempPath );
             return ;
         }
-
+        //Placement relatif dans ce dossier
         if ( chdir( tempPath ) != 0 ) {
             printf("Abandon");
             return;
         }
     }
-    else{
-        printf("Fonctionne pour %s\n", tempPath);
-    }
-
-
-
-
 
     // Créer la structure stat pour obtenir des informations sur le fichier source
     struct stat source_stat;
@@ -346,16 +325,13 @@ void make_list(files_list_t *list, char *target) {
 
     while ((dent = get_next_entry(dir)) != NULL) {
         //Si c'est un dossier on parcours le dossier de maniere recurcive
-
         if (dent->d_type == 4) {
             make_list(list, concat_path("", target, dent->d_name));
         } else if (dent->d_type == 8) { //Si c'est un fichier on l'ajoute à la liste
-            add_file_entry(list,concat_path("", target, dent->d_name));
+            add_file_entry(list, concat_path("", target, dent->d_name));
         }
+        closedir(dir);
     }
-
-
-    closedir(dir);
 }
 
 /*!

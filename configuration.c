@@ -75,12 +75,12 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
 
     int opt = 0;
     struct option my_opts[] = {
-        {.name = "date-size-only", .has_arg = 0, .flag = 0, .val = 'a'},
-        {.name = "n", .has_arg = 1, .flag = 0, .val = 'b'},
-        {.name = "no-parallel", .has_arg = 0, .flag = 0, .val = 'c'},
-        {.name = "v", .has_arg = 0, .flag = 0, .val = 'd'},
-        {.name = "dry-run", .has_arg = 0, .flag = 0, .val = 'e'},
-        {.name = 0, .has_arg = 0, .flag = 0, .val = 0},
+            {.name = "date-size-only", .has_arg = 0, .flag = 0, .val = 'a'},
+            {.name = "n", .has_arg = 1, .flag = 0, .val = 'b'},
+            {.name = "no-parallel", .has_arg = 0, .flag = 0, .val = 'c'},
+            {.name = "v", .has_arg = 0, .flag = 0, .val = 'd'},
+            {.name = "dry-run", .has_arg = 0, .flag = 0, .val = 'e'},
+            {.name = 0, .has_arg = 0, .flag = 0, .val = 0},
     };
 
     while ((opt = getopt_long(argc, argv, "", my_opts, NULL)) != -1) {
