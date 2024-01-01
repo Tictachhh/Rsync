@@ -39,14 +39,22 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
     //Remplissage des listes
     make_files_list(source_list, the_config->source);
+
     make_files_list(destination_list, the_config->destination);
 
+
     //Création des variables de parcours
+	
+	if(source_list == NULL){
+		return;		
+	}
+	
+
     files_list_entry_t *current_source = source_list->head;
-    files_list_entry_t *current_destination = destination_list->head;
+    
 
     //Si la taille de la liste source est plus grande que la taille de la liste destination
-    if (current_destination == NULL) {
+    if (destination_list == NULL) {
         //ajout des elements dans la liste des differences
         while (current_source != NULL) {
             add_entry_to_tail(differences_list,current_source);
@@ -55,11 +63,10 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
         }
     }
     else{
-
         //Parcours des deux listes
         while (current_source != NULL){
 
-            current_destination = destination_list->head;
+            files_list_entry_t *current_destination = destination_list->head;
             int i = 0;
             int j = 0;
             while(current_destination != NULL) {
@@ -68,29 +75,31 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
                     i++;
                 }
                 j++;
-                if (i == j) {
-                    add_entry_to_tail(differences_list,current_source);
-                }
+                
                 current_destination = current_destination->next;
             }
 
+		if (i == j) {
+                    add_entry_to_tail(differences_list,current_source);
+                }
 
             current_source = current_source->next;
         }
 
 
     }
+	if(differences_list != NULL){
 
+		//Variable de parcours
+		    files_list_entry_t *current_difference = differences_list->head;
 
-    //Variable de parcours
-    files_list_entry_t *current_difference = differences_list->head;
-
-    //Parcours de la liste des differences
-    while (current_difference != NULL) {
-        //Copie des differences
-        copy_entry_to_destination(current_difference,the_config);
-        current_difference = current_difference->next;
-    }
+		    //Parcours de la liste des differences
+		    while (current_difference != NULL) {
+			//Copie des differences
+			copy_entry_to_destination(current_difference,the_config);
+			current_difference = current_difference->next;
+		    }
+	}
 }
 
 /*!
