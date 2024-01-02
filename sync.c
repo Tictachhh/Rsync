@@ -162,6 +162,24 @@ void make_files_list(files_list_t *list, char *target_path) {
  * @param msg_queue is the id of the MQ used for communication
  */
 void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, configuration_t *the_config, int msg_queue) {
+
+    if(the_config->is_parallel == false){
+        make_files_list(src_list,the_config->source);
+        make_files_list(dst_list,the_config->destination);
+    }
+    else {
+        pid_t child_pid;
+        child_pid = fork();
+
+        if (child_pid == 0) {
+            make_files_list(src_list,the_config->source);
+        } else if (child_pid > 0) {
+            make_files_list(dst_list,the_config->destination);
+        } else {
+            fprintf(stderr, "Erreur lors de la création du processus\n");
+            return;
+        }
+    }
 }
 
 /*!
