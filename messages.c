@@ -89,6 +89,13 @@ int send_files_list_element(int msg_queue, int recipient, files_list_entry_t *fi
  * @return the result of msgsnd
  */
 int send_list_end(int msg_queue, int recipient) {
+    simple_command_t list_end_message;
+    list_end_message.mtype = recipient;
+    list_end_message.message = COMMAND_CODE_LIST_COMPLETE;
+
+    // Envoie le message de fin de liste
+    return msgsnd(msg_queue, &list_end_message, sizeof(list_end_message.message), 0);
+
 }
 
 /*!
@@ -98,6 +105,12 @@ int send_list_end(int msg_queue, int recipient) {
  * @return the result of msgsnd
  */
 int send_terminate_command(int msg_queue, int recipient) {
+    simple_command_t terminate_command;
+    terminate_command.mtype = recipient;
+    terminate_command.message = COMMAND_CODE_TERMINATE;
+
+    // Envoie la commande de terminaison
+    return msgsnd(msg_queue, &terminate_command, sizeof(terminate_command.message), 0);
 }
 
 /*!
@@ -107,4 +120,10 @@ int send_terminate_command(int msg_queue, int recipient) {
  * @return the result of msgsnd
  */
 int send_terminate_confirm(int msg_queue, int recipient) {
+    simple_command_t terminate_confirm;
+    terminate_confirm.mtype = recipient;
+    terminate_confirm.message = COMMAND_CODE_TERMINATE_OK;
+
+    // Envoie la confirmation de terminaison
+    return msgsnd(msg_queue, &terminate_confirm, sizeof(terminate_confirm.message), 0);
 }
