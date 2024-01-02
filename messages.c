@@ -35,9 +35,9 @@ int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
     analyze_dir_command_t command;
     command.mtype = recipient;
     command.op_code =  COMMAND_CODE_ANALYZE_DIR;
-    strcpy(command.path, target_dir);
+    strcpy(command.target, target_dir);
     
-    int result = msgsnd(msg_queue, &command, sizeof(command.path), 0);
+    int result = msgsnd(msg_queue, &command, sizeof(command.target), 0);
     return result;
 }
 
