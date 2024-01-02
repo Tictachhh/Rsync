@@ -8,6 +8,8 @@
 #include "sync.h"
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
+#include <sys/wait.h> 
 
 /*!
  * @brief prepare prepares (only when parallel is enabled) the processes used for the synchronization.
@@ -84,6 +86,20 @@ int make_process(process_context_t *p_context, process_loop_t func, void *parame
  * @param parameters is a pointer to its parameters, to be cast to a lister_configuration_t
  */
 void lister_process_loop(void *parameters) {
+    lister_configuration_t *config = (lister_configuration_t *)parameters;
+
+    int my_recipient_id = config->my_recipient_id;
+    int my_receiver_id = config->my_receiver_id;
+    int analyzers_count = config->analyzers_count;
+    key_t mq_key = config->mq_key;
+
+    // Example: Print information
+    printf("Lister_process:\n");
+    printf("my_recipient_id: %d\n", my_recipient_id);
+    printf("my_receiver_id: %d\n", my_receiver_id);
+    printf("analyzers_count: %d\n", analyzers_count);
+    printf("mq_key: %d\n", mq_key);
+
 }
 
 /*!
@@ -91,6 +107,20 @@ void lister_process_loop(void *parameters) {
  * @param parameters is a pointer to its parameters, to be cast to an analyzer_configuration_t
  */
 void analyzer_process_loop(void *parameters) {
+    analyzer_configuration_t *config = (analyzer_configuration_t *)parameters;
+
+    int my_recipient_id = config->my_recipient_id;
+    int my_receiver_id = config->my_receiver_id;
+    key_t mq_key = config->mq_key;
+    bool use_md5 = config->use_md5;
+
+    // Example: Print information
+    printf("Analyzer_process: \n");
+    printf("my_recipient_id: %d\n", my_recipient_id);
+    printf("my_receiver_id: %d\n", my_receiver_id);
+    printf("mq_key: %d\n", mq_key);
+    printf("use_md5: %s\n", use_md5 ? "true" : "false");
+
 }
 
 /*!
@@ -99,6 +129,42 @@ void analyzer_process_loop(void *parameters) {
  * @param p_context is a pointer to the processes context
  */
 void clean_processes(configuration_t *the_config, process_context_t *p_context) {
+    // Do nothing if not parallel
+    if (the_config->is_parallel) {
+    // Send terminate
+        for (int i = 0; i < p_context->processes_count; ++i) {
+            kill(p_context->source_analyzers_pids[i], SIGTERM);
+            kill(p_context->destination_analyzers_pids[i], SIGTERM);
+        }
+
+        // Wait for for responses
+        for (int i = 0; i < p_context->processes_count; ++i) {
+            int status;
+            waitpid(p_context->source_analyzers_pids[i], &status, 0);
+            if (WIFEXITED(status)) {
+                printf("Process %d exited with status %d\n", p_context->source_analyzers_pids[i], WEXITSTATUS(status));
+            } else if (WIFSIGNALED(status)) {
+                printf("Process %d terminated by signal %d\n", p_context->source_analyzers_pids[i], WTERMSIG(status));
+            }
+
+            waitpid(p_context->destination_analyzers_pids[i], &status, 0);
+            if (WIFEXITED(status)) {
+                printf("Process %d exited with status %d\n", p_context->destination_analyzers_pids[i], WEXITSTATUS(status));
+            } else if (WIFSIGNALED(status)) {
+                printf("Process %d terminated by signal %d\n", p_context->destination_analyzers_pids[i], WTERMSIG(status));
+            }
+        }
+
+        // Free allocated memory
+        free(p_context->source_analyzers_pids);
+        free(p_context->destination_analyzers_pids);
+
+        // Free the MQ
+        if (msgctl(p_context->message_queue_id, IPC_RMID, NULL) == -1) {
+            perror("Error deleting message queue");
+        }
+    }
+
     // Do nothing if not parallel
     // Send terminate
     // Wait for responses
