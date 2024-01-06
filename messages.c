@@ -44,6 +44,10 @@ int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
     strcpy(command.target, target_dir);
     
     int result = msgsnd(msg_queue, &command, sizeof(command.target), 0);
+     if (result == -1)
+    {
+       perror("Erreur dans msgsnd");
+    }
     return result;
 }
 
