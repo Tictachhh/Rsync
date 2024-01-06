@@ -19,7 +19,13 @@ int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry
     entree_fichier_transmis.mtype = recipient;
     entree_fichier_transmis.op_code = cmd_code;
     entree_fichier_transmis.payload = *file_entry;
+    
     int result = msgsnd(msg_queue, &entree_fichier_transmis, sizeof(files_list_entry_transmit_t), 0);
+    
+    if (result == -1)
+    {
+       perror("Erreur dans msgsnd");
+    }
     return result;
 }
 
