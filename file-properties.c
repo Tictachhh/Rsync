@@ -54,7 +54,7 @@ int get_file_stats(files_list_entry_t *entry) {
         return -1;
     }
 
-    printf("Mode: %o\n", entry->mode);
+    /*printf("Mode: %o\n", entry->mode);
     printf("Mtime: %ld\n", entry->mtime.tv_sec); // Utilisez %ld pour un long
     printf("Size: %ld\n", entry->size);
     printf("Entry Type: %s\n", entry->entry_type == FICHIER ? "FICHIER" : "DOSSIER");
@@ -62,7 +62,7 @@ int get_file_stats(files_list_entry_t *entry) {
     for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
         printf("%02x", entry->md5sum[i]);
     }
-    printf("\n");
+    printf("\n");*/
 
     return 0;
 }
