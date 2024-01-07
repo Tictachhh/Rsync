@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 /*!
  * @brief synchronize is the main function for synchronization
@@ -43,6 +44,12 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
         make_files_list(source_list, the_config->source);
         make_files_list(destination_list, the_config->destination);
 
+	if(the_config->verbose == true){
+		printf("Liste source :\n");
+		display_files_list(source_list);
+		printf("Liste destination :\n");
+		display_files_list(destination_list);
+	}
 
         if(source_list == NULL){
             return;
@@ -83,18 +90,31 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
                 current_source = current_source->next;
             }
-
-
         }
+	
+	if(the_config->verbose == true){
+		printf("Liste des differences :\n");
+		display_files_list(differences_list);
+	}
+
+
         if(differences_list != NULL){
 
             //Variable de parcours
                 files_list_entry_t *current_difference = differences_list->head;
+		
 
                 //Parcours de la liste des differences
                 while (current_difference != NULL) {
                 //Copie des differences
-                    copy_entry_to_destination(current_difference,the_config);
+			if(the_config->verbose == true){
+				printf("Copie de %s\n", current_difference->path_and_name);			
+			}
+			if(the_config->dry_run == false){
+				copy_entry_to_destination(current_difference,the_config);
+			}
+			
+                    
                     current_difference = current_difference->next;
                 }
         }
@@ -103,6 +123,14 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     else{
 
         make_files_lists_parallel(source_list,destination_list,the_config, p_context->message_queue_id);
+
+
+	if(the_config->verbose == true){
+		printf("Liste source :\n");
+		display_files_list(source_list);
+		printf("Liste destination :\n");
+		display_files_list(destination_list);
+	}
 
         if(source_list == NULL){
             return;
@@ -114,27 +142,63 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
         //Si la taille de la liste source est plus grande que la taille de la liste destination
         if (destination_list == NULL) {
             //ajout des elements dans la liste des differences
+            while (current_source != NULL) {
+                add_entry_to_tail(differences_list,current_source);
 
-            if(getpid() == p_context->source_lister_pid){
-                //On est dans le programme qui liste les sources
-                send_files_list_element(p_context->message_queue_id,MSG_TYPE_TO_SOURCE_ANALYZERS,current_source);
+                current_source = current_source->next;
             }
+        }
+        else{
+            //Parcours des deux listes
+            while (current_source != NULL){
 
-            //Pour chaque precessus je vais
-            for(int i = 0; i < p_context->processes_count; i++){
+                files_list_entry_t *current_destination = destination_list->head;
+                int i = 0;
+                int j = 0;
+                while(current_destination != NULL) {
+                    //S'il y a une difference, on l'ajoute à la liste des differences
+                    if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
+                        i++;
+                    }
+                    j++;
 
-                if(getpid() == p_context->source_analyzers_pids[i]){
-
-                    files_list_entry_transmit_t entree_fichier_transmis;
-
-                    msgrcv(p_context->message_queue_id, &entree_fichier_transmis, sizeof(entree_fichier_transmis),MSG_TYPE_TO_SOURCE_ANALYZERS,0);
-
-                    add_entry_to_tail(differences_list,current_source);
+                    current_destination = current_destination->next;
                 }
+
+            if (i == j) {
+                        add_entry_to_tail(differences_list,current_source);
+                    }
+
+                current_source = current_source->next;
             }
+        }
+
+	if(the_config->verbose == true){
+		printf("Liste des differences :\n");
+		display_files_list(differences_list);
+	}
 
 
+        if(differences_list != NULL && the_config->dry_run == false){
 
+            //Variable de parcours
+                files_list_entry_t *current_difference = differences_list->head;
+		
+
+                //Parcours de la liste des differences
+                while (current_difference != NULL) {
+                //Copie des differences
+			if(the_config->verbose == true){
+				printf("Copie de %s\n", current_difference->path_and_name);			
+			}
+			if(the_config->dry_run == false){
+				copy_entry_to_destination(current_difference,the_config);
+			}
+			
+                    
+                    current_difference = current_difference->next;
+                }
+        
         }
 
     }
@@ -184,7 +248,6 @@ void make_files_list(files_list_t *list, char *target_path) {
     while (current != NULL) {
         //Récupération si possible de toutes les informations du fichier
 
-        printf("\nPath : %s\n", current->path_and_name);
         if (get_file_stats(current) == -1) {
             perror("Impossible de récupérer les informations du fichier a");
         }
@@ -201,9 +264,13 @@ void make_files_list(files_list_t *list, char *target_path) {
  */
 void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, configuration_t *the_config, int msg_queue) {
 
-    int id = fork();
+    int pid = fork();
 
-    if(id == 0)
+    if(pid == -1){
+	printf("erreur avec le fork");
+    }
+
+    if(pid == 0)
     //Enfant
     {
         make_files_list(src_list,the_config->source);
@@ -214,7 +281,7 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
         //Parcours de la liste
         while (current != NULL) {
             //Récupération si possible de toutes les informations du fichier
-            printf("\nPath : %s\n", current->path_and_name);
+
             if (get_file_stats(current) == -1) {
                 perror("Impossible de récupérer les informations du fichier a");
             }
@@ -222,8 +289,9 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
         }
 
     }
-    else if (id > 0)
+    else
     {//Pere
+	
         make_files_list(dst_list,the_config->destination);
 
         //Variable de parcours
@@ -232,17 +300,14 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
         //Parcours de la liste
         while (current != NULL) {
             //Récupération si possible de toutes les informations du fichier
-            printf("\nPath : %s\n", current->path_and_name);
             if (get_file_stats(current) == -1) {
                 perror("Impossible de récupérer les informations du fichier a");
             }
             current = current->next;
         }
     }
-    else{
-        printf("erreur avec fork");
-    }
 
+    wait(0);
 
 }
 
@@ -261,6 +326,7 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
                                                  sizeof(source_entry->path_and_name) -
                                                  sizeof(the_config->source));
 
+ 
     //Creation de la nouvelle chaine de caractere du nouveau path
 
     int i,j,k,l = -1;
@@ -287,15 +353,8 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
         destination_path_without_name[l] = '\0';
     }
 
-    printf("%s",destination_path);
-    printf("%s",destination_path_without_name);
-
-
-
-
 
     //Creation des dossiers nécessaires
-
 
 	char * tempPath = calloc(strlen(destination_path_without_name)+1,sizeof(char));
 
@@ -309,10 +368,6 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
         if(destination_path_without_name[i] == '/'){
 
             if ( chdir( tempPath ) != 0 ) {
-                printf("Fonctionne pas pour %s\n", tempPath);
-                printf("Creation du dossier %s\n", tempPath);
-
-
 
                 if ( mkdir( tempPath, 0755 ) != 0 ) {
                     printf("Impossible de créer le dossier %s : \n", tempPath );
@@ -325,9 +380,6 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
                 }
 
             }
-            else{
-                printf("Fonctionne pour %s\n", tempPath);
-            }
 
 
             tempPath[0] = '\0';
@@ -338,8 +390,6 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
     }
 
     if ( chdir( tempPath ) != 0 ) {
-        printf("Fonctionne pas pour %s\n", tempPath);
-        printf("Creation du dossier %s\n", tempPath);
         if ( mkdir( tempPath, 0755 ) != 0 ) {
             printf("Impossible de créer le dossier %s : \n", tempPath );
             return ;
@@ -350,12 +400,6 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
             return;
         }
     }
-    else{
-        printf("Fonctionne pour %s\n", tempPath);
-    }
-
-
-
 
 
     // Créer la structure stat pour obtenir des informations sur le fichier source
