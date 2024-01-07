@@ -36,16 +36,13 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     if (existing_entry != NULL) {
         return existing_entry;
     }
-    printf("\n2[%s]\n",file_path);
 
     files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
 
-    printf("\n3[%s]\n",file_path);
     if (new_entry == NULL) {
         return NULL;
     }
 
-    printf("\n3[%s]\n",file_path);
 
     strncpy(new_entry->path_and_name, file_path, sizeof(new_entry->path_and_name) - 1);
     new_entry->path_and_name[sizeof(new_entry->path_and_name) - 1] = '\0';
