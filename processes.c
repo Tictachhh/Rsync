@@ -22,8 +22,8 @@ int prepare(configuration_t *the_config, process_context_t *p_context) {
         p_context->processes_count = the_config->processes_count;
         p_context->main_process_pid = getpid();
 
-        p_context->source_analyzers_pids = (pid_t *)malloc(sizeof(pid_t) * p_context->processes_count);
-        p_context->destination_analyzers_pids = (pid_t *)malloc(sizeof(pid_t) * p_context->processes_count);
+        p_context->source_analyzers_pids = (pid_t *)malloc(sizeof(pid_t) *p_context->processes_count);
+        p_context->destination_analyzers_pids = (pid_t *)malloc(sizeof(pid_t) *p_context->processes_count);
 
         key_t my_key = ftok("processes.c", 25);
         int msg_id = msgget(my_key, 0666 | IPC_CREAT);
