@@ -87,7 +87,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
         return -1;
     }
 
-    files_list_entry_t * new_el = malloc(sizeof(*entry));
+    files_list_entry_t *new_el = malloc(sizeof(*entry));
     *new_el = *entry;
 
     if (list->head == NULL) {
