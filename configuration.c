@@ -57,21 +57,6 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
         return -1;
     }
 
-    //Bonne taille ?
-    if (strlen(argv[1]) >= 1024) {
-        return -1;
-    }
-    //Copie
-    strcpy(the_config->source, argv[1]);
-
-
-    //Bonne taille ?
-    if (strlen(argv[2]) >= 1024) {
-        return -1;
-    }
-    //Copie
-    strcpy(the_config->destination, argv[2]);
-
 
     int opt = 0;
     struct option my_opts[] = {
