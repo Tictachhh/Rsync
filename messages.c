@@ -13,8 +13,7 @@
  * @return the result of the msgsnd function
  * Used by the specialized functions send_analyze*
  */
-int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) 
-{
+int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) {
     files_list_entry_transmit_t entree_fichier_transmis;
     entree_fichier_transmis.mtype = recipient;
     entree_fichier_transmis.op_code = cmd_code;
@@ -22,8 +21,7 @@ int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry
     
     int result = msgsnd(msg_queue, &entree_fichier_transmis, sizeof(files_list_entry_transmit_t), 0);
     
-    if (result == -1)
-    {
+    if (result == -1) {
        perror("Erreur dans msgsnd");
     }
     return result;
@@ -44,8 +42,7 @@ int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
     strcpy(command.target, target_dir);
     
     int result = msgsnd(msg_queue, &command, sizeof(command.target), 0);
-    if (result == -1)
-    {
+    if (result == -1) {
        perror("Erreur dans msgsnd");
     }
     return result;
@@ -61,8 +58,7 @@ int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
  * @return the result of the send_file_entry function
  * Calls send_file_entry function
  */
-int send_analyze_file_command(int msg_queue, int recipient, files_list_entry_t *file_entry) 
-{
+int send_analyze_file_command(int msg_queue, int recipient, files_list_entry_t *file_entry) {
     return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_ANALYZE_FILE);
 }
 
@@ -74,8 +70,7 @@ int send_analyze_file_command(int msg_queue, int recipient, files_list_entry_t *
  * @return the result of the send_file_entry function
  * Calls send_file_entry function
  */
-int send_analyze_file_response(int msg_queue, int recipient, files_list_entry_t *file_entry) 
-{
+int send_analyze_file_response(int msg_queue, int recipient, files_list_entry_t *file_entry) {
     return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_FILE_ANALYZED);
 }
 
@@ -87,8 +82,7 @@ int send_analyze_file_response(int msg_queue, int recipient, files_list_entry_t 
  * @return the result of the send_file_entry function
  * Calls send_file_entry function
  */
-int send_files_list_element(int msg_queue, int recipient, files_list_entry_t *file_entry) 
-{
+int send_files_list_element(int msg_queue, int recipient, files_list_entry_t *file_entry) {
     return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_FILE_ENTRY);
 }
 
