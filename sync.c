@@ -37,69 +37,107 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     differences_list->head = NULL;
     differences_list->tail = NULL;
 
-    //Remplissage des listes
-    make_files_list(source_list, the_config->source);
+    if(the_config->is_parallel == false){
 
-    make_files_list(destination_list, the_config->destination);
+        //Remplissage des listes
+        make_files_list(source_list, the_config->source);
+        make_files_list(destination_list, the_config->destination);
 
 
-    //Création des variables de parcours
-	
-	if(source_list == NULL){
-		return;		
-	}
-	
-
-    files_list_entry_t *current_source = source_list->head;
-    
-
-    //Si la taille de la liste source est plus grande que la taille de la liste destination
-    if (destination_list == NULL) {
-        //ajout des elements dans la liste des differences
-        while (current_source != NULL) {
-            add_entry_to_tail(differences_list,current_source);
-
-            current_source = current_source->next;
+        if(source_list == NULL){
+            return;
         }
-    }
-    else{
-        //Parcours des deux listes
-        while (current_source != NULL){
 
-            files_list_entry_t *current_destination = destination_list->head;
-            int i = 0;
-            int j = 0;
-            while(current_destination != NULL) {
-                //S'il y a une difference, on l'ajoute à la liste des differences
-                if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
-                    i++;
+        //Création d'une variable de parcours
+        files_list_entry_t *current_source = source_list->head;
+
+        //Si la taille de la liste source est plus grande que la taille de la liste destination
+        if (destination_list == NULL) {
+            //ajout des elements dans la liste des differences
+            while (current_source != NULL) {
+                add_entry_to_tail(differences_list,current_source);
+
+                current_source = current_source->next;
+            }
+        }
+        else{
+            //Parcours des deux listes
+            while (current_source != NULL){
+
+                files_list_entry_t *current_destination = destination_list->head;
+                int i = 0;
+                int j = 0;
+                while(current_destination != NULL) {
+                    //S'il y a une difference, on l'ajoute à la liste des differences
+                    if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
+                        i++;
+                    }
+                    j++;
+
+                    current_destination = current_destination->next;
                 }
-                j++;
-                
-                current_destination = current_destination->next;
+
+            if (i == j) {
+                        add_entry_to_tail(differences_list,current_source);
+                    }
+
+                current_source = current_source->next;
             }
 
-		if (i == j) {
-                    add_entry_to_tail(differences_list,current_source);
-                }
 
-            current_source = current_source->next;
+        }
+        if(differences_list != NULL){
+
+            //Variable de parcours
+                files_list_entry_t *current_difference = differences_list->head;
+
+                //Parcours de la liste des differences
+                while (current_difference != NULL) {
+                //Copie des differences
+                    copy_entry_to_destination(current_difference,the_config);
+                    current_difference = current_difference->next;
+                }
+        }
+    }
+
+    else{
+
+        make_files_lists_parallel(source_list,destination_list,the_config, p_context->message_queue_id);
+
+        if(source_list == NULL){
+            return;
         }
 
+        //Création d'une variable de parcours
+        files_list_entry_t *current_source = source_list->head;
+
+        //Si la taille de la liste source est plus grande que la taille de la liste destination
+        if (destination_list == NULL) {
+            //ajout des elements dans la liste des differences
+
+            if(getpid() == p_context->source_lister_pid){
+                //On est dans le programme qui liste les sources
+                send_files_list_element(p_context->message_queue_id,MSG_TYPE_TO_SOURCE_ANALYZERS,current_source);
+            }
+
+            //Pour chaque precessus je vais
+            for(int i = 0; i < p_context->processes_count; i++){
+
+                if(getpid() == p_context->source_analyzers_pids[i]){
+
+                    files_list_entry_transmit_t entree_fichier_transmis;
+
+                    msgrcv(p_context->message_queue_id, &entree_fichier_transmis, sizeof(entree_fichier_transmis),MSG_TYPE_TO_SOURCE_ANALYZERS,0);
+
+                    add_entry_to_tail(differences_list,current_source);
+                }
+            }
+
+
+
+        }
 
     }
-	if(differences_list != NULL){
-
-		//Variable de parcours
-		    files_list_entry_t *current_difference = differences_list->head;
-
-		    //Parcours de la liste des differences
-		    while (current_difference != NULL) {
-			//Copie des differences
-			copy_entry_to_destination(current_difference,the_config);
-			current_difference = current_difference->next;
-		    }
-	}
 }
 
 /*!
@@ -163,23 +201,49 @@ void make_files_list(files_list_t *list, char *target_path) {
  */
 void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, configuration_t *the_config, int msg_queue) {
 
-    if(the_config->is_parallel == false){
-        make_files_list(src_list,the_config->source);
-        make_files_list(dst_list,the_config->destination);
-    }
-    else {
-        pid_t child_pid;
-        child_pid = fork();
+    int id = fork();
 
-        if (child_pid == 0) {
-            make_files_list(src_list,the_config->source);
-        } else if (child_pid > 0) {
-            make_files_list(dst_list,the_config->destination);
-        } else {
-            fprintf(stderr, "Erreur lors de la création du processus\n");
-            return;
+    if(id == 0)
+    //Enfant
+    {
+        make_files_list(src_list,the_config->source);
+
+        //Variable de parcours
+        files_list_entry_t *current = src_list->head;
+
+        //Parcours de la liste
+        while (current != NULL) {
+            //Récupération si possible de toutes les informations du fichier
+            printf("\nPath : %s\n", current->path_and_name);
+            if (get_file_stats(current) == -1) {
+                perror("Impossible de récupérer les informations du fichier a");
+            }
+            current = current->next;
+        }
+
+    }
+    else if (id > 0)
+    {//Pere
+        make_files_list(dst_list,the_config->destination);
+
+        //Variable de parcours
+        files_list_entry_t *current = dst_list->head;
+
+        //Parcours de la liste
+        while (current != NULL) {
+            //Récupération si possible de toutes les informations du fichier
+            printf("\nPath : %s\n", current->path_and_name);
+            if (get_file_stats(current) == -1) {
+                perror("Impossible de récupérer les informations du fichier a");
+            }
+            current = current->next;
         }
     }
+    else{
+        printf("erreur avec fork");
+    }
+
+
 }
 
 /*!

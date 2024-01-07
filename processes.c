@@ -20,35 +20,59 @@
 int prepare(configuration_t *the_config, process_context_t *p_context) {
     if (the_config->is_parallel) {
         p_context->processes_count = the_config->processes_count;
+        p_context->main_process_pid = getpid();
 
         p_context->source_analyzers_pids = (pid_t *)malloc(sizeof(pid_t) * p_context->processes_count);
         p_context->destination_analyzers_pids = (pid_t *)malloc(sizeof(pid_t) * p_context->processes_count);
+
+        key_t my_key = ftok("processes.c", 25);
+        int msg_id = msgget(my_key, 0666 | IPC_CREAT);
+
+        p_context->shared_key = my_key;
+        p_context->message_queue_id = msg_id;
 
         if (p_context->source_analyzers_pids == NULL || p_context->destination_analyzers_pids == NULL) {
             perror("Memory allocation failed");
             return -1;
         }
 
+        lister_configuration_t source_lister_config;
+        source_lister_config.my_recipient_id = 1;//J'envoie à lui
+        source_lister_config.my_receiver_id = 2;//Je reçois de lui
+        source_lister_config.analyzers_count = the_config->processes_count;
+        source_lister_config.mq_key = p_context->shared_key;
+
+        lister_configuration_t destination_lister_config;
+        destination_lister_config.my_recipient_id = 3;//J'envoie à lui
+        destination_lister_config.my_receiver_id = 4;//Je reçois de lui
+        destination_lister_config.analyzers_count = the_config->processes_count;
+        destination_lister_config.mq_key = p_context->shared_key;
+
+
+        p_context->source_lister_pid = make_process(p_context,lister_process_loop, (void *)&source_lister_config);
+        p_context->destination_lister_pid = make_process(p_context,lister_process_loop, (void *)&destination_lister_config);
+
+
         // Creer un analyseur de source
         analyzer_configuration_t source_analyzer_config;
         source_analyzer_config.my_recipient_id = 1;
         source_analyzer_config.my_receiver_id = 2;
-        source_analyzer_config.mq_key = 1234;
+        source_analyzer_config.mq_key = p_context->shared_key;
         source_analyzer_config.use_md5 = the_config->uses_md5;
 
-        for (int i = 0; i < p_context->processes_count; ++i) {
-            make_process(p_context, analyzer_process_loop, (void *)&source_analyzer_config);
+        for (int i = 0; i < p_context->processes_count; i++) {
+            p_context->source_analyzers_pids[i] = make_process(p_context, analyzer_process_loop, (void *)&source_analyzer_config);
         }
 
         // Creer un analyseur de destination
         analyzer_configuration_t destination_analyzer_config;
         destination_analyzer_config.my_recipient_id = 3;
         destination_analyzer_config.my_receiver_id = 4;
-        destination_analyzer_config.mq_key = 5678;
+        destination_analyzer_config.mq_key = p_context->shared_key;
         destination_analyzer_config.use_md5 = the_config->uses_md5;
 
-        for (int i = 0; i < p_context->processes_count; ++i) {
-            make_process(p_context, analyzer_process_loop, (void *)&destination_analyzer_config);
+        for (int i = 0; i < p_context->processes_count; i++) {
+            p_context->destination_analyzers_pids[i] = make_process(p_context, analyzer_process_loop, (void *)&destination_analyzer_config);
         }
 
         return 0; // Success
@@ -75,7 +99,7 @@ int make_process(process_context_t *p_context, process_loop_t func, void *parame
     if (pid == 0) {
         // Code exécuté par le processus enfant
         func(parameters); // Appel de la fonction avec les paramètres spécifiés
-        _exit(0); // Fin du processus enfant
+        //_exit(0); // Fin du processus enfant
     } else {
         return pid; // Retourne le PID du processus enfant au parent
     }
@@ -170,4 +194,9 @@ void clean_processes(configuration_t *the_config, process_context_t *p_context) 
     // Wait for responses
     // Free allocated memory
     // Free the MQ
+}
+
+
+void request_element_details(int msg_queue, files_list_entry_t *entry, lister_configuration_t *cfg, int *current_analyzers){
+
 }
