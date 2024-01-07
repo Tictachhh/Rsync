@@ -38,20 +38,20 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
     differences_list->head = NULL;
     differences_list->tail = NULL;
 
-    if(the_config->is_parallel == false){
+    if (the_config->is_parallel == false) {
 
         //Remplissage des listes
         make_files_list(source_list, the_config->source);
         make_files_list(destination_list, the_config->destination);
 
-	if(the_config->verbose == true){
+	if (the_config->verbose == true) {
 		printf("Liste source :\n");
 		display_files_list(source_list);
 		printf("Liste destination :\n");
 		display_files_list(destination_list);
 	}
 
-        if(source_list == NULL){
+        if (source_list == NULL) {
             return;
         }
 
@@ -66,15 +66,14 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
                 current_source = current_source->next;
             }
-        }
-        else{
+        } else {
             //Parcours des deux listes
-            while (current_source != NULL){
+            while (current_source != NULL) {
 
                 files_list_entry_t *current_destination = destination_list->head;
                 int i = 0;
                 int j = 0;
-                while(current_destination != NULL) {
+                while (current_destination != NULL) {
                     //S'il y a une difference, on l'ajoute à la liste des differences
                     if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
                         i++;
@@ -84,55 +83,53 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
                     current_destination = current_destination->next;
                 }
 
-            if (i == j) {
+            	if (i == j) {
                         add_entry_to_tail(differences_list,current_source);
-                    }
+            	}
 
-                current_source = current_source->next;
+            	current_source = current_source->next;
             }
         }
 	
-	if(the_config->verbose == true){
+	if (the_config->verbose == true) {
 		printf("Liste des differences :\n");
 		display_files_list(differences_list);
 	}
 
 
-        if(differences_list != NULL){
+        if (differences_list != NULL) {
 
-            //Variable de parcours
-                files_list_entry_t *current_difference = differences_list->head;
-		
+    	//Variable de parcours
+	files_list_entry_t *current_difference = differences_list->head;
+	
 
-                //Parcours de la liste des differences
-                while (current_difference != NULL) {
-                //Copie des differences
-			if(the_config->verbose == true){
+		//Parcours de la liste des differences
+		while (current_difference != NULL) {
+		//Copie des differences
+			if (the_config->verbose == true) {
 				printf("Copie de %s\n", current_difference->path_and_name);			
 			}
-			if(the_config->dry_run == false){
+			if (the_config->dry_run == false) {
 				copy_entry_to_destination(current_difference,the_config);
 			}
 			
-                    
-                    current_difference = current_difference->next;
-                }
+		    
+		    current_difference = current_difference->next;
+		}
         }
-    }
-
-    else{
+    } else {
 
         make_files_lists_parallel(source_list,destination_list,the_config, p_context->message_queue_id);
 
 
-	if(the_config->verbose == true){
+	if (the_config->verbose == true) {
 		printf("Liste source :\n");
 		display_files_list(source_list);
 		printf("Liste destination :\n");
 		display_files_list(destination_list);
 	}
 
-        if(source_list == NULL){
+        if (source_list == NULL) {
             return;
         }
 
@@ -147,15 +144,14 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
 
                 current_source = current_source->next;
             }
-        }
-        else{
+        } else {
             //Parcours des deux listes
-            while (current_source != NULL){
+            while (current_source != NULL) {
 
                 files_list_entry_t *current_destination = destination_list->head;
                 int i = 0;
                 int j = 0;
-                while(current_destination != NULL) {
+                while (current_destination != NULL) {
                     //S'il y a une difference, on l'ajoute à la liste des differences
                     if (mismatch(current_source,current_destination, the_config->uses_md5) == true) {
                         i++;
@@ -165,21 +161,21 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
                     current_destination = current_destination->next;
                 }
 
-            if (i == j) {
-                        add_entry_to_tail(differences_list,current_source);
-                    }
+            	if (i == j) {
+                	add_entry_to_tail(differences_list,current_source);
+            	}
 
                 current_source = current_source->next;
             }
         }
 
-	if(the_config->verbose == true){
+	if (the_config->verbose == true) {
 		printf("Liste des differences :\n");
 		display_files_list(differences_list);
 	}
 
 
-        if(differences_list != NULL && the_config->dry_run == false){
+        if (differences_list != NULL && the_config->dry_run == false) {
 
             //Variable de parcours
                 files_list_entry_t *current_difference = differences_list->head;
@@ -188,10 +184,10 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
                 //Parcours de la liste des differences
                 while (current_difference != NULL) {
                 //Copie des differences
-			if(the_config->verbose == true){
+			if (the_config->verbose == true) {
 				printf("Copie de %s\n", current_difference->path_and_name);			
 			}
-			if(the_config->dry_run == false){
+			if (the_config->dry_run == false) {
 				copy_entry_to_destination(current_difference,the_config);
 			}
 			
@@ -266,13 +262,11 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
 
     int pid = fork();
 
-    if(pid == -1){
+    if (pid == -1) {
 	printf("erreur avec le fork");
     }
 
-    if(pid == 0)
-    //Enfant
-    {
+    if (pid == 0) { //Enfant
         make_files_list(src_list,the_config->source);
 
         //Variable de parcours
@@ -288,9 +282,7 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
             current = current->next;
         }
 
-    }
-    else
-    {//Pere
+    } else { //Pere
 	
         make_files_list(dst_list,the_config->destination);
 
@@ -330,11 +322,11 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
     //Creation de la nouvelle chaine de caractere du nouveau path
 
     int i,j,k,l = -1;
-    for( i = 0; i < strlen(the_config->destination); i++){
+    for (i = 0; i < strlen(the_config->destination); i++) {
         destination_path[i] = the_config->destination[i];
     }
 
-    for(j=strlen(the_config->source); j < strlen(source_entry->path_and_name); j++){
+    for (j = strlen(the_config->source); j < strlen(source_entry->path_and_name); j++) {
         destination_path[i] = source_entry->path_and_name[j];
         i++;
     }
@@ -343,38 +335,38 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
 
     strcpy(destination_path_without_name,destination_path);
 
-    for(k = 0; k < strlen(destination_path_without_name); k++){
-        if(destination_path_without_name[k] == '/'){
+    for (k = 0; k < strlen(destination_path_without_name); k++) {
+        if (destination_path_without_name[k] == '/') {
             l = k;
         }
     }
 
-    if(l!=-1){
+    if (l!=-1) {
         destination_path_without_name[l] = '\0';
     }
 
 
     //Creation des dossiers nécessaires
 
-	char * tempPath = calloc(strlen(destination_path_without_name)+1,sizeof(char));
+    char *tempPath = calloc(strlen(destination_path_without_name)+1,sizeof(char));
 
     int cpt = 0;
-    for(int i = 0; i < strlen(destination_path_without_name); i++){
+    for (int i = 0; i < strlen(destination_path_without_name); i++) {
 
         tempPath[cpt] = destination_path_without_name[i];
         tempPath[cpt+1] = '\0';
         cpt++;
 
-        if(destination_path_without_name[i] == '/'){
+        if (destination_path_without_name[i] == '/') {
 
-            if ( chdir( tempPath ) != 0 ) {
+            if (chdir(tempPath) != 0) {
 
-                if ( mkdir( tempPath, 0755 ) != 0 ) {
-                    printf("Impossible de créer le dossier %s : \n", tempPath );
+                if (mkdir(tempPath, 0755) != 0) {
+                    printf("Impossible de créer le dossier %s : \n", tempPath);
                     return ;
                 }
 
-                if ( chdir( tempPath ) != 0 ) {
+                if (chdir(tempPath) != 0) {
                     printf("Abandon");
                     return;
                 }
@@ -389,13 +381,13 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
 
     }
 
-    if ( chdir( tempPath ) != 0 ) {
-        if ( mkdir( tempPath, 0755 ) != 0 ) {
-            printf("Impossible de créer le dossier %s : \n", tempPath );
+    if (chdir(tempPath) != 0) {
+        if (mkdir(tempPath, 0755) != 0) {
+            printf("Impossible de créer le dossier %s : \n", tempPath);
             return ;
         }
 
-        if ( chdir( tempPath ) != 0 ) {
+        if (chdir(tempPath) != 0) {
             printf("Abandon");
             return;
         }
@@ -504,11 +496,11 @@ struct dirent *get_next_entry(DIR *dir) {
     struct dirent *dent;
     dent = readdir(dir);
 
-    if(dent == NULL){
+    if (dent == NULL) {
         return NULL;
     }
 
-    if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0){
+    if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0) {
         dent = get_next_entry(dir);
     }
 
